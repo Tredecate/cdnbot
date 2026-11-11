@@ -1,0 +1,15 @@
+services:
+  cdnbot:
+    build: .
+    container_name: cdnbot
+    restart: unless-stopped
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - BUCKET_NAME=${BUCKET_NAME}
+      - BUCKET_ACCESS_KEY_ID=${BUCKET_ACCESS_KEY_ID}
+      - BUCKET_SECRET_ACCESS_KEY=${BUCKET_SECRET_ACCESS_KEY}
+      - BUCKET_REGION=${BUCKET_REGION}
+      - BUCKET_URL=${BUCKET_URL}
+      - BUCKET_PUBLIC_URL=${BUCKET_PUBLIC_URL}
+      - CDN_CACHE_TOKEN=${CDN_CACHE_TOKEN}
+      - CDN_CACHE_PURGE_URL=${CDN_CACHE_PURGE_URL}

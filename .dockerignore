@@ -1,0 +1,56 @@
+# .dockerignore
+
+# --- Python Cache & Bytecode ---
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+
+# --- Virtual Environments & Dependencies ---
+.venv/
+venv/
+env/
+ENV/
+**/.uv/
+**/*.egg-info/
+.eggs/
+build/
+dist/
+
+# --- Environment Variables & Secrets ---
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials/
+
+# --- Version Control ---
+.git/
+.gitignore
+.gitattributes
+
+# --- Testing & Coverage ---
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+htmlcov/
+.cache/
+nosetests.xml
+coverage.xml
+
+# --- IDEs & OS Clutter ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Docker & CI/CD ---
+Dockerfile
+docker-compose*.yml
+.dockerignore
+.github/
+.gitlab-ci.yml

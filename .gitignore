@@ -1,0 +1,19 @@
+## Python Stuff
+__pycache__/
+*.pyc
+
+## Venvs
+venv/
+.venv/
+_venv/
+.env
+
+## OS stuff
+__MACOSX/
+.DS_Store
+Thumbs.db
+*:Zone.Identifier
+
+## IDE stuff
+.vscode/
+.idea/
