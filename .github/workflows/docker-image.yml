@@ -3,13 +3,23 @@ name: Docker Image CI
 on:
   workflow_dispatch:
 
+permissions:
+  packages: write
+
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag cdnbot:$(date +%s)
+
+    - name: Log in to GHCR
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Build and Push the Docker image
+      run: |
+        IMAGE_NAME="ghcr.io/${{ github.repository_owner }}/cdnbot"
+        IMAGE_NAME=$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')
+        
+        docker build . --file Dockerfile --tag "$IMAGE_NAME:latest"
+        docker push "$IMAGE_NAME:latest"
