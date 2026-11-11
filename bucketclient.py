@@ -2,6 +2,7 @@ import boto3
 import requests
 
 from config import settings
+from log import debug_log
 
 
 class BucketClient():
@@ -57,6 +58,7 @@ class BucketClient():
         response = requests.post(self.cdn_cache_purge_url, headers=headers, json=data)
 
         if response.status_code != 200:
+            debug_log(f"Failed to purge CDN cache for prefix {prefix}. Status code: {response.status_code}, Response: {response.text}", level=1)
             raise ValueError("Failed to purge CDN cache.")
         
         return response.json()
