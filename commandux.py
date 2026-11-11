@@ -91,6 +91,12 @@ class MediaWizardView(discord.ui.View):
                 )
             else:
                 uploaded_paths.append(f"{settings.bucket_public_url}/{dest_path}")
+                try:
+                    client.purge_cache(f"{settings.bucket_public_url.split("://")[1]}/{dest_path}")
+                except Exception as e:
+                    await interaction.followup.send(
+                        f"Failed to purge cache for {dest_path}: {e}", ephemeral=True
+                    )
 
         summary = "\n".join(uploaded_paths)
         await interaction.edit_original_response(
