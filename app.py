@@ -25,38 +25,41 @@ bot = CDNBot(intents=intents)
 
 @bot.tree.command(name="getfiletree", description="Get the file tree for a given path in the CDN")
 @app_commands.describe(path="The path to get the file tree for")
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
-async def getfiletree(interaction: discord.Interaction, path: str = ""):
+async def getfiletree(interaction: discord.Interaction, path: str = "", ephemeral: bool = True):
     try:
         file_tree = client.get_file_tree(path)
     except Exception as e:
         await interaction.response.send_message(f"Failed to get file tree for {path}: {e}", ephemeral=True)
     else:
-        await interaction.response.send_message(f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```", ephemeral=True)
+        await interaction.response.send_message(f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```", ephemeral=ephemeral)
 
 
 @bot.tree.command(name="purgecache", description="Purge the cache for all files under a given prefix in the CDN")
 @app_commands.describe(prefix="The prefix of the files to purge from the cache")
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
-async def purgecache(interaction: discord.Interaction, prefix: str):
+async def purgecache(interaction: discord.Interaction, prefix: str, ephemeral: bool = True):
     prefix = settings.bucket_public_url.rstrip("/") + "/" + prefix.lstrip("/")
     try:
         client.purge_cache(prefix)
     except Exception as e:
         await interaction.response.send_message(f"Failed to purge cache for {prefix}: {e}", ephemeral=True)
     else:
-        await interaction.response.send_message(f"Cache purged for {prefix}.", ephemeral=True)
+        await interaction.response.send_message(f"Cache purged for {prefix}.", ephemeral=ephemeral)
 
 
 @bot.tree.command(name="move", description="Move a file from one path to another in the CDN")
 @app_commands.describe(source="The path of the file to move")
 @app_commands.describe(destination="The path to move the file to")
 @app_commands.describe(purge_cache="Whether to purge the cache for the source and destination paths after moving")
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
-async def move(interaction: discord.Interaction, source: str, destination: str, purge_cache: bool = True):
+async def move(interaction: discord.Interaction, source: str, destination: str, purge_cache: bool = True, ephemeral: bool = True):
     try:
         file_data = client.get_file(source)
     except Exception as e:
@@ -77,7 +80,7 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
         await interaction.response.send_message(f"Failed to move {source} to {destination}: {e}. Nothing was changed.", ephemeral=True)
         return
     else:
-        await interaction.response.send_message(f"File {source} moved to {destination} in the CDN.", ephemeral=True)
+        await interaction.response.send_message(f"File {source} moved to {destination} in the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
         full_source = settings.bucket_public_url.rstrip("/") + "/" + source.lstrip("/")
@@ -101,9 +104,10 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
 @bot.tree.command(name="delete", description="Delete a file from the CDN")
 @app_commands.describe(path="The path of the file to delete")
 @app_commands.describe(purge_cache="Whether to purge the cache for the file after deletion")
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
-async def delete(interaction: discord.Interaction, path: str, purge_cache: bool = True):
+async def delete(interaction: discord.Interaction, path: str, purge_cache: bool = True, ephemeral: bool = True):
     try:
         client.get_file(path)
     except Exception as e:
@@ -116,7 +120,7 @@ async def delete(interaction: discord.Interaction, path: str, purge_cache: bool 
         await interaction.response.send_message(f"Failed to delete {path} from the CDN: {e}", ephemeral=True)
         return
     else:
-        await interaction.response.send_message(f"File {path} deleted from the CDN.", ephemeral=True)
+        await interaction.response.send_message(f"File {path} deleted from the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
         full_path = settings.bucket_public_url.rstrip("/") + "/" + path.lstrip("/")
