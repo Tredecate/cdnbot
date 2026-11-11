@@ -1,6 +1,6 @@
 services:
   cdnbot:
-    build: .
+    image: ghcr.io/tredecate/cdnbot:latest
     container_name: cdnbot
     restart: unless-stopped
     environment:
