@@ -183,7 +183,7 @@ async def process_emojis(emojis: list[str]):
 
         emoji_url = f"https://cdn.discordapp.com/emojis/{emoji_id}.webp{'?animated=true' if anim else ''}"
 
-        media.append((name + "webp", requests.get(emoji_url).content, emoji_url))
+        media.append((name + ".webp", requests.get(emoji_url).content, emoji_url))
 
     debug_log(media, 2)
     return media
@@ -246,7 +246,7 @@ async def process_stickers(stickers: list[discord.Sticker]):
     if len(stickers) == 0:
         return []
 
-    media = [(sticker.name + sticker.format.name, await sticker.read(), sticker.url) for sticker in stickers if sticker.format != discord.StickerFormatType.lottie]
+    media = [(sticker.name + "." + sticker.format.name, await sticker.read(), sticker.url) for sticker in stickers if sticker.format != discord.StickerFormatType.lottie]
 
     debug_log(media, 2)
     return media
