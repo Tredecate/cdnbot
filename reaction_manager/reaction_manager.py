@@ -9,6 +9,7 @@ from bucketclient import client
 
 class ReactionManager:
     def __init__(self):
+        self.catalog_url: str | None = None
         self._remote_state: dict | None = None
         self._local_state: dict | None = None
 
@@ -22,9 +23,10 @@ class ReactionManager:
                 try:
                     with open("reaction_manager/state_template.json", "r", encoding="utf-8") as f:
                         self._local_state = json.load(f)
+                        self._update_state()
                 except Exception as e:
-                    debug_log(f"Failed to load state template: {e}")
-                    raise ValueError("Failed to initialize ReactionManager. Could not load state template.")
+                    debug_log(f"Failed to init state: {e}")
+                    raise ValueError("Failed to initialize ReactionManager. Could not upload template.")
             else:
                 raise ValueError("Failed to initialize ReactionManager. Could not fetch remote state.")
 
@@ -123,13 +125,18 @@ class ReactionManager:
         except Exception as e:
             debug_log(f"Failed to update remote state file {state_file}: {e}")
             raise ValueError("Failed to update remote state file.")
+        else:
+            try:
+                client.purge_cache(f"{settings.bucket_public_url.split('://')[1]}/{state_file}")
+            except Exception as e:
+                debug_log(f"Failed to purge cache for state file {state_file}: {e}")
 
         self._get_state()
 
 
     def _generate_reaction_html(self, state: dict) -> str:
         try:
-            with open("reaction_manager/reaction_template.html", "r", encoding="utf-8") as f:
+            with open("reaction_manager/reactions_template.html", "r", encoding="utf-8") as f:
                 template = f.read()
         except Exception as e:
             debug_log(f"Failed to read reaction template: {e}")
@@ -155,10 +162,16 @@ class ReactionManager:
 
         try:
             client.upload_file(html_file_path, html_content.encode("utf-8"))
+            self.catalog_url = f"{settings.bucket_public_url}/{html_file_path}"
             debug_log(f"Successfully updated reaction HTML file: {html_file_path}")
         except Exception as e:
             debug_log(f"Failed to update reaction HTML file {html_file_path}: {e}")
             raise ValueError("Failed to update reaction HTML file.")
+        else:
+            try:
+                client.purge_cache(f"{settings.bucket_public_url.split('://')[1]}/{html_file_path}")
+            except Exception as e:
+                debug_log(f"Failed to purge cache for HTML file {html_file_path}: {e}")
 
 
     def _parse_state_to_html(self, state_section: dict, template: str) -> str:
@@ -191,3 +204,11 @@ class ReactionManager:
                 template = template.replace(end_marker, item_html + "\n" + end_marker)
 
         return template
+
+
+reaction_manager = None
+
+try:
+    reaction_manager = ReactionManager()
+except Exception as e:
+    debug_log(f"Failed to initialize ReactionManager: {e}")

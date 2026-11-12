@@ -1,13 +1,16 @@
+import json
 import discord
 import re
 import requests
 
+from typing import Literal
 from discord import app_commands
 
 from config import settings
 from log import debug_log
 from bucketclient import client
 from commandux import MediaWizardView
+from reaction_manager.reaction_manager import reaction_manager
 
 
 class CDNBot(discord.Client):
@@ -21,6 +24,45 @@ class CDNBot(discord.Client):
 
 intents = discord.Intents.default()
 bot = CDNBot(intents=intents)
+
+
+@bot.tree.command(name="addtocatalog", description="Add a reaction to the reaction catalog")
+@app_commands.describe(category="The category of the reaction to add")
+@app_commands.describe(name="The name of the reaction to add")
+@app_commands.describe(file_url="The URL of the file to add as a reaction")
+@app_commands.describe(alt_names="Alternative names for the reaction as a JSON array")
+@app_commands.describe(width="The width override for the media")
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.allowed_installs(guilds=True, users=True)
+async def addtocatalog(interaction: discord.Interaction, category: Literal["kaomoji", "emojis", "gifs", "images"], name: str, file_url: str, alt_names: str = "[]", width: int = None, ephemeral: bool = True):
+    await interaction.response.defer(ephemeral=ephemeral)
+
+    if reaction_manager is None:
+        await interaction.followup.send("ReactionManager is not initialized. Cannot add to catalog.", ephemeral=True)
+        return
+
+    try:
+        alt_names_list = json.loads(alt_names)
+    except json.JSONDecodeError:
+        await interaction.followup.send("Invalid JSON for alt_names. Please provide a valid JSON array.", ephemeral=True)
+        return
+
+    try:
+        match category:
+            case "kaomoji":
+                reaction_manager.add_kaomoji(alt_names_list, name)
+            case "emojis":
+                reaction_manager.add_emoji(name, file_url, alt_names_list, width)
+            case "gifs":
+                reaction_manager.add_gif(name, file_url, alt_names_list, width)
+            case "images":
+                reaction_manager.add_image(name, file_url, alt_names_list, width)
+    except Exception as e:
+        await interaction.followup.send(f"Failed to add reaction to catalog: {e}", ephemeral=True)
+        return
+
+    await interaction.followup.send(f"Successfully added {name} to the {category} catalog!\n{reaction_manager.catalog_url}", ephemeral=ephemeral)
 
 
 @bot.tree.command(name="getfiletree", description="Get the file tree for a given path in the CDN")
