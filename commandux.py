@@ -36,33 +36,33 @@ class MediaWizardView(discord.ui.View):
         super().__init__(timeout=300)
         self.media = media
         self.current_index = 0
+
         # Stores (name, bytes, url, dest_path)
         self.confirmed_uploads: list[tuple[str, bytes, str, str]] = []
 
     def build_current_embed(self) -> discord.Embed:
         name, _, url = self.media[self.current_index]
+
         total = len(self.media)
         embed = discord.Embed(
             title=f"Media {self.current_index + 1} of {total}",
             description=f"**Name:** `{name}`\nUpload this item to the CDN?",
         )
         embed.set_thumbnail(url=url)
+
         return embed
 
     async def update_message(self, interaction: discord.Interaction):
         if self.current_index < len(self.media):
-            embed = self.build_current_embed()
-            await interaction.response.edit_message(embed=embed, view=self)
+            await interaction.response.edit_message(embed=self.build_current_embed(), view=self)
         else:
-            # All items reviewed; execute uploads
             await self.finish(interaction)
 
     async def finish(self, interaction: discord.Interaction):
         self.stop()
+
         if not self.confirmed_uploads:
-            await interaction.response.edit_message(
-                content="No media selected for upload.", embed=None, view=None
-            )
+            await interaction.response.edit_message(content="No media selected for upload.", embed=None, view=None)
             return
 
         await interaction.response.edit_message(
@@ -75,8 +75,7 @@ class MediaWizardView(discord.ui.View):
         for name, data, url, dest_path in self.confirmed_uploads:
             try:
                 client.get_file(dest_path)  # Check if file already exists
-            except Exception:
-                pass
+            except Exception: pass
             else:
                 confirm_view = ConfirmView(question=f"{dest_path} already exists. Overwrite?", media_url=f"{settings.bucket_public_url}/{dest_path}")
                 prompt_message = await interaction.followup.send(
@@ -87,29 +86,26 @@ class MediaWizardView(discord.ui.View):
 
                 await confirm_view.wait()
                 await prompt_message.delete()
-                
-                if not confirm_view.choice:
+
+                if confirm_view.choice == False:
                     continue
 
             try:
                 client.upload_file(dest_path, data)
             except Exception as e:
-                await interaction.followup.send(
-                    f"Failed to upload {name} to {dest_path}: {e}", ephemeral=True
-                )
-            else:
-                uploaded_paths.append(f"{settings.bucket_public_url}/{dest_path}")
-                try:
-                    client.purge_cache(f"{settings.bucket_public_url.split("://")[1]}/{dest_path}")
-                except Exception as e:
-                    await interaction.followup.send(
-                        f"Failed to purge cache for {dest_path}: {e}", ephemeral=True
-                    )
+                await interaction.followup.send(f"Failed to upload {name} to {dest_path}: {e}", ephemeral=True)
+                return
+            
+            uploaded_paths.append(f"{settings.bucket_public_url}/{dest_path}")
+
+            try:
+                client.purge_cache(f"{settings.bucket_public_url.split("://")[1]}/{dest_path}")
+            except Exception as e:
+                await interaction.followup.send(f"Failed to purge cache for {dest_path}: {e}", ephemeral=True)
+                return
 
         summary = "\n".join(uploaded_paths)
-        await interaction.edit_original_response(
-            content=f"Uploaded {len(uploaded_paths)} item(s) to CDN:\n{summary}"
-        )
+        await interaction.edit_original_response(content=f"Uploaded {len(uploaded_paths)} item(s) to CDN:\n{summary}")
 
     @discord.ui.button(label="Yes (Set Path)", style=discord.ButtonStyle.success)
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -138,6 +134,7 @@ class ConfirmView(discord.ui.View):
         )
         if self.media_url:
             embed.set_image(url=self.media_url)
+        
         return embed
 
     @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)

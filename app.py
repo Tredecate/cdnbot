@@ -33,8 +33,9 @@ async def getfiletree(interaction: discord.Interaction, path: str = "", ephemera
         file_tree = client.get_file_tree(path)
     except Exception as e:
         await interaction.response.send_message(f"Failed to get file tree for {path}: {e}", ephemeral=True)
-    else:
-        await interaction.response.send_message(f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```", ephemeral=ephemeral)
+        return
+    
+    await interaction.response.send_message(f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```", ephemeral=ephemeral)
 
 
 @bot.tree.command(name="purgecache", description="Purge the cache for all files under a given prefix in the CDN")
@@ -48,8 +49,9 @@ async def purgecache(interaction: discord.Interaction, prefix: str, ephemeral: b
         client.purge_cache(prefix)
     except Exception as e:
         await interaction.response.send_message(f"Failed to purge cache for {prefix}: {e}", ephemeral=True)
-    else:
-        await interaction.response.send_message(f"Cache purged for {prefix}.", ephemeral=ephemeral)
+        return
+    
+    await interaction.response.send_message(f"Cache purged for {prefix}.", ephemeral=ephemeral)
 
 
 @bot.tree.command(name="move", description="Move a file from one path to another in the CDN")
@@ -68,8 +70,7 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
 
     try:
         client.get_file(destination)
-    except Exception:
-        pass
+    except Exception: pass
     else:
         await interaction.response.send_message(f"File {destination} already exists in the CDN. Cannot move {source} to {destination}.", ephemeral=True)
         return
@@ -79,12 +80,13 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
     except Exception as e:
         await interaction.response.send_message(f"Failed to move {source} to {destination}: {e}. Nothing was changed.", ephemeral=True)
         return
-    else:
-        await interaction.response.send_message(f"File {source} moved to {destination} in the CDN.", ephemeral=ephemeral)
+    
+    await interaction.response.send_message(f"File {source} moved to {destination} in the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
         full_source = settings.bucket_public_url.rstrip("/") + "/" + source.lstrip("/")
         full_destination = settings.bucket_public_url.rstrip("/") + "/" + destination.lstrip("/")
+
         try:
             client.purge_cache(full_source)
         except Exception as e:
@@ -119,8 +121,8 @@ async def delete(interaction: discord.Interaction, path: str, purge_cache: bool 
     except Exception as e:
         await interaction.response.send_message(f"Failed to delete {path} from the CDN: {e}", ephemeral=True)
         return
-    else:
-        await interaction.response.send_message(f"File {path} deleted from the CDN.", ephemeral=ephemeral)
+    
+    await interaction.response.send_message(f"File {path} deleted from the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
         full_path = settings.bucket_public_url.rstrip("/") + "/" + path.lstrip("/")
