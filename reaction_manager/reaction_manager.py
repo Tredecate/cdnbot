@@ -20,16 +20,43 @@ class ReactionManager:
         })
 
 
-    def add_emoji(self, name: str, file_path: str, alt_names: list[str] = [], width: int = None):
-        pass
+    def add_emoji(self, name: str, file_url: str, alt_names: list[str] = [], width: int = None):
+        item_data = {
+            "alt": name,
+            "alts": alt_names,
+            "data": file_url,
+        }
+
+        if width is not None:
+            item_data["width"] = width
+        
+        self._add_reaction("emojis", item_data)
 
 
-    def add_gif(self, name: str, file_path: str, alt_names: list[str] = [], width: int = None):
-        pass
+    def add_gif(self, name: str, file_url: str, alt_names: list[str] = [], width: int = None):
+        item_data = {
+            "alt": name,
+            "alts": alt_names,
+            "data": file_url,
+        }
+
+        if width is not None:
+            item_data["width"] = width
+        
+        self._add_reaction("gifs", item_data)
 
 
-    def add_image(self, name: str, file_path: str, alt_names: list[str] = [], width: int = None):
-        pass
+    def add_image(self, name: str, file_url: str, alt_names: list[str] = [], width: int = None):
+        item_data = {
+            "alt": name,
+            "alts": alt_names,
+            "data": file_url,
+        }
+
+        if width is not None:
+            item_data["width"] = width
+        
+        self._add_reaction("images", item_data)
 
 
     def _add_reaction(self, category: str, item_data: dict):
