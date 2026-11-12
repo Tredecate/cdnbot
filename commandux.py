@@ -102,10 +102,23 @@ class MediaWizardView(discord.ui.View):
                 client.purge_cache(f"{settings.bucket_public_url.split("://")[1]}/{dest_path}")
             except Exception as e:
                 await interaction.followup.send(f"Failed to purge cache for {dest_path}: {e}", ephemeral=True)
-                return
 
         summary = "\n".join(uploaded_paths)
-        await interaction.edit_original_response(content=f"Uploaded {len(uploaded_paths)} item(s) to CDN:\n{summary}")
+
+        ask_should_announce = ConfirmView(question="Announce uploaded items in the channel?", default_value=False)
+        prompt_message = await interaction.followup.send(
+            embed=ask_should_announce.build_embed(),
+            view=ask_should_announce,
+            ephemeral=True,
+        )
+
+        await ask_should_announce.wait()
+        await prompt_message.delete()
+
+        if ask_should_announce.choice:
+            await interaction.followup.send(f"Uploaded {len(uploaded_paths)} item(s) to CDN:\n{summary}", ephemeral=False)
+        else:
+            await interaction.edit_original_response(content=f"Uploaded {len(uploaded_paths)} item(s) to CDN:\n{summary}")
 
     @discord.ui.button(label="Yes (Set Path)", style=discord.ButtonStyle.success)
     async def confirm_button(self, interaction: discord.Interaction, button: discord.ui.Button):
