@@ -15,6 +15,7 @@ class Settings(BaseSettings):
 
     cdn_cache_purge_url: str = Field(default="", min_length=0)
     cdn_state_file: str = Field(default="", min_length=0)
+    cdn_do_init_state: bool = Field(default=False)
 
     debug_level: int = Field(default=0, ge=0, le=2)
 

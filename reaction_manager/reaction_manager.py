@@ -12,6 +12,22 @@ class ReactionManager:
         self._remote_state: dict | None = None
         self._local_state: dict | None = None
 
+        try:
+            self._get_state()
+        except Exception as e:
+            debug_log(f"Failed to initialize ReactionManager: {e}")
+
+            if settings.cdn_do_init_state:
+                debug_log("Attempting to initialize state from template.")
+                try:
+                    with open("reaction_manager/state_template.json", "r", encoding="utf-8") as f:
+                        self._local_state = json.load(f)
+                except Exception as e:
+                    debug_log(f"Failed to load state template: {e}")
+                    raise ValueError("Failed to initialize ReactionManager. Could not load state template.")
+            else:
+                raise ValueError("Failed to initialize ReactionManager. Could not fetch remote state.")
+
 
     def add_kaomoji(self, alt_names: list[str], text: str):
         self._add_reaction("kaomoji", {
@@ -87,7 +103,7 @@ class ReactionManager:
             self._remote_state = json.loads(state_data.decode("utf-8"))
             self._local_state = json.loads(state_data.decode("utf-8"))
         except Exception as e:
-            debug_log(f"Failed to fetch remote state file: {e}")
+            debug_log(f"Failed to fetch remote state file from {state_file}: {e}")
             self._local_state = None
             raise ValueError("Failed to fetch remote state file.")
 
@@ -105,7 +121,7 @@ class ReactionManager:
             client.upload_file(state_file, json.dumps(self._local_state).encode("utf-8"))
             debug_log(f"Successfully updated remote state file: {state_file}")
         except Exception as e:
-            debug_log(f"Failed to update remote state file: {e}")
+            debug_log(f"Failed to update remote state file {state_file}: {e}")
             raise ValueError("Failed to update remote state file.")
 
         self._get_state()
@@ -119,6 +135,8 @@ class ReactionManager:
             debug_log(f"Failed to read reaction template: {e}")
             raise ValueError("Failed to generate reaction HTML. No template available.")
 
+        debug_log(f"Using reaction template: {template}", 2)
+
         reaction_html = self._parse_state_to_html(state["reactions"], template)
 
         return reaction_html
@@ -130,6 +148,8 @@ class ReactionManager:
         
         html_content = self._generate_reaction_html(self._local_state)
 
+        debug_log(f"Generated reaction HTML: {html_content}", 2)
+
         state_meta = self._local_state["reactions"]["meta"]
         html_file_path = state_meta.get("root") + state_meta.get("html_catalog")
 
@@ -137,11 +157,12 @@ class ReactionManager:
             client.upload_file(html_file_path, html_content.encode("utf-8"))
             debug_log(f"Successfully updated reaction HTML file: {html_file_path}")
         except Exception as e:
-            debug_log(f"Failed to update reaction HTML file: {e}")
+            debug_log(f"Failed to update reaction HTML file {html_file_path}: {e}")
             raise ValueError("Failed to update reaction HTML file.")
 
 
     def _parse_state_to_html(self, state_section: dict, template: str) -> str:
+        debug_log(f"Parsing state section to HTML: {state_section}", 2)
         section_meta = state_section.get("meta", None)
         
         if section_meta is None or section_meta.get("type", "") != "cdn_section":
