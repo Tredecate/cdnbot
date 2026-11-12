@@ -111,5 +111,32 @@ class ReactionManager:
             raise ValueError("Failed to update reaction HTML file.")
 
 
-    def _parse_state_to_html(self, state: dict, template: str) -> str:
-        pass
+    def _parse_state_to_html(self, state_section: dict, template: str) -> str:
+        section_meta = state_section.get("meta", None)
+        
+        if section_meta is None or section_meta.get("type", "") != "cdn_section":
+            raise ValueError("State section is invalid or missing 'meta' information.")
+
+        for category in section_meta.get("categories", []):
+            category_data = state_section.get(category, None)
+            
+            if category_data is None or category_data.get("type", "") != "cdn_category":
+                debug_log(f"Category '{category}' is missing or invalid.")
+                continue
+
+            start_marker = f"<!-- startsect:{category} -->"
+            end_marker = f"<!-- endsect:{category} -->"
+
+            html_schema = category_data.get("html_schema", "")
+            fields = category_data.get("fields", [])
+            defaults = category_data.get("defaults", {})
+
+            for item in category_data.get("items", []):
+                item_html = html_schema
+                for field in fields:
+                    value = item.get(field, defaults.get(field, ""))
+                    item_html = item_html.replace("${" + field + "}", str(value))
+
+                template = template.replace(end_marker, item_html + "\n" + end_marker)
+
+        return template
