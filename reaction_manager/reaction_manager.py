@@ -13,8 +13,11 @@ class ReactionManager:
         self._local_state: dict | None = None
 
 
-    def add_kaomoji(self, alt: str, data: str):
-        pass
+    def add_kaomoji(self, alt_names: list[str], text: str):
+        self._add_reaction("kaomoji", {
+            "alts": alt_names,
+            "data": text
+        })
 
 
     def add_emoji(self, name: str, file_path: str, alt_names: list[str] = [], width: int = None):
