@@ -78,10 +78,18 @@ class MediaWizardView(discord.ui.View):
             except Exception:
                 pass
             else:
-                await interaction.followup.send(
-                    f"File {dest_path} already exists in the CDN. Skipping upload.", ephemeral=True
+                confirm_view = ConfirmView(question=f"{dest_path} already exists. Overwrite?", media_url=f"{settings.bucket_public_url}/{dest_path}")
+                prompt_message = await interaction.followup.send(
+                    embed=confirm_view.build_embed(),
+                    view=confirm_view,
+                    ephemeral=True,
                 )
-                continue
+
+                await confirm_view.wait()
+                await prompt_message.delete()
+                
+                if not confirm_view.choice:
+                    continue
 
             try:
                 client.upload_file(dest_path, data)
@@ -113,3 +121,33 @@ class MediaWizardView(discord.ui.View):
     async def skip_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         self.current_index += 1
         await self.update_message(interaction)
+
+
+class ConfirmView(discord.ui.View):
+    def __init__(self, question: str, default_value: bool = False, media_url: str = ""):
+        super().__init__(timeout=60)
+        self.choice: bool = default_value
+        self.question = question
+        self.media_url = media_url
+
+    def build_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="Confirmation",
+            description=self.question,
+            color=discord.Color.blue()
+        )
+        if self.media_url:
+            embed.set_image(url=self.media_url)
+        return embed
+
+    @discord.ui.button(label="Yes", style=discord.ButtonStyle.success)
+    async def yes_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.choice = True
+        self.stop()
+        await interaction.response.defer(ephemeral=True)
+
+    @discord.ui.button(label="No", style=discord.ButtonStyle.danger)
+    async def no_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        self.choice = False
+        self.stop()
+        await interaction.response.defer(ephemeral=True)
