@@ -1,0 +1,53 @@
+{
+    "reactions": {
+        "meta": {
+            "type": "cdn_section",
+            "root": "react/",
+            "html_catalog": "reactions.html",
+            "categories": ["kaomoji", "emojis", "gifs", "images"]
+        },
+        "kaomoji": {
+            "type": "cdn_category",
+            "root": "react/kaomoji/",
+            "html_schema": "<p data-alt=\"${alts}\">${data}</p>",
+            "fields": ["alts", "data"],
+            "defaults": {
+                "alts": []
+            },
+            "items": []
+        },
+        "emojis": {
+            "type": "cdn_category",
+            "root": "react/emoji/",
+            "html_schema": "<img alt=\"${alt}\" data-alt=\"${alts}\" width=\"${width}\" src=\"${data}\">",
+            "fields": ["alt", "alts", "width", "data"],
+            "defaults": {
+                "alts": [],
+                "width": "35"
+            },
+            "items": []
+        },
+        "gifs": {
+            "type": "cdn_category",
+            "root": "react/gifs/",
+            "html_schema": "<img alt=\"${alt}\" data-alt=\"${alts}\" width=\"${width}\" src=\"${data}\">",
+            "fields": ["alt", "alts", "width", "data"],
+            "defaults": {
+                "alts": [],
+                "width": "150"
+            },
+            "items": []
+        },
+        "images": {
+            "type": "cdn_category",
+            "root": "react/imgs/",
+            "html_schema": "<img alt=\"${alt}\" data-alt=\"${alts}\" width=\"${width}\" src=\"${data}\">",
+            "fields": ["alt", "alts", "width", "data"],
+            "defaults": {
+                "alts": [],
+                "width": "100"
+            },
+            "items": []
+        }
+    }
+}
