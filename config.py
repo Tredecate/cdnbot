@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     bucket_public_url: str = Field(default="", min_length=0)
 
     cdn_cache_purge_url: str = Field(default="", min_length=0)
+    cdn_state_file: str = Field(default="", min_length=0)
 
     debug_level: int = Field(default=0, ge=0, le=2)
 

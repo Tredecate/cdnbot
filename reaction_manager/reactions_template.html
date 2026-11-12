@@ -1,0 +1,69 @@
+<html><head><meta charset="utf-8"></head><body>
+
+<!-- toggle to switch between copying alt text and html element -->
+
+<label for="copyMode">Copy HTML:</label>
+<input type="checkbox" id="copyMode" name="copyMode" checked>
+
+
+<h2>kaomoji</h2>
+<!-- startsect:kaomoji -->
+<p data-alt="[]"></p>
+<!-- endsect:kaomoji -->
+
+<h2>emojis</h2>
+<!-- startsect:emojis -->
+<img alt=""  data-alt="[]" width="35" src="">
+<!-- endsect:emojis -->
+
+<h2>gifs</h2>
+<!-- startsect:gifs -->
+<img alt="(gif)"  data-alt="[]" width="150" src="">
+<!-- endsect:gifs -->
+
+<h2>images</h2>
+<!-- startsect:images -->
+<img alt=""  data-alt="[]" width="100" src="">
+<!-- endsect:images -->
+
+
+<script>
+    // copy the html of any clicked img or p tag to keyboard
+    const imgs = document.querySelectorAll('img, p');
+    imgs.forEach(img => {
+        img.addEventListener('click', () => {
+            const html = img.outerHTML;
+            const copyMode = document.getElementById('copyMode').checked;
+
+            if (copyMode) {
+                // copy the html of the element
+                textToCopy = img.textContent || html;
+                textToCopy = textToCopy.replace(/ data-alt\s*=\s*["'].*?["'] /g, " ");
+            } else {
+                // copy the alt text of the element
+                textToCopy = ":" + (img.alt || img.dataset.alt || '') + ":";
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                // extremely basic toast notification
+                const toast = document.createElement('div');
+                toast.textContent = `${img.alt || img.dataset.alt || 'Unknown'} copied to clipboard!`;
+                toast.style.position = 'fixed';
+                toast.style.bottom = '10px';
+                toast.style.left = '10px';
+                toast.style.backgroundColor = 'lightgray';
+                toast.style.border = '1px solid #ccc';
+                toast.style.padding = '10px';
+                toast.style.zIndex = '1000';
+                document.body.appendChild(toast);
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        });
+    });
+</script>
+
+</body></html>
