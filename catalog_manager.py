@@ -229,7 +229,7 @@ class CatalogManager:
                 item_html = html_schema
                 for field in fields:
                     value = item.get(field, defaults.get(field, ""))
-                    item_html = item_html.replace("${" + field + "}", str(value))
+                    item_html = item_html.replace("{{" + field + "}}", str(value))
 
                 block_lines.append(item_html)
 
