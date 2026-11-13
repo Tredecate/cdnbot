@@ -1,4 +1,5 @@
 import reprlib
+import sys
 
 from config import settings
 
@@ -27,5 +28,6 @@ log_repr = BytesOnlyRepr(max_bytes=20)
 
 def debug_log(message, level: int = 1):
     if level <= settings.debug_level:
+        caller = sys._getframe(1).f_code.co_name
         formatted = log_repr.repr(message)
-        print(f"[DEBUG] {formatted}")
+        print(f"[DEBUG] {caller}: {formatted}")
