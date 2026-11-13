@@ -63,6 +63,7 @@ async def managecatalog(interaction: discord.Interaction, catalog: str, ephemera
 
     options = {
         "Refresh Catalog": (manager.refresh_catalog, None, lambda: "Refresh successful"),
+        "Move Media to Category Roots": (manager.move_media_to_category_roots,),
         "Check Initialization Status": (lambda: manager.is_initialized(),),
         "Reinitialize Catalog": (manager.initialize_catalog, False, lambda: manager.failuremode),
         "Reinitialize Catalog (Rebuild if Needed)": (manager.initialize_catalog, False, lambda: manager.failuremode, (True,)),
@@ -87,6 +88,8 @@ async def managecatalog(interaction: discord.Interaction, catalog: str, ephemera
 
     if len(choice) > 1:
         returned_data = choice[2]() if result == choice[1] else returned_data
+    elif result is not None:
+        returned_data = result
 
     await interaction.edit_original_response(content=f"Action '{view.choice}' completed. Result: {returned_data}", view=None)
 
