@@ -64,3 +64,4 @@ class BucketClient():
         return response.json()
     
 client = BucketClient()
+debug_log(f"Initialized BucketClient with bucket: {settings.bucket_name}, region: {settings.bucket_region}, URL: {settings.bucket_url}", level=1)

@@ -10,6 +10,7 @@ from log import debug_log
 
 class CatalogManager:
     def __init__(self, catalog_config: CdnCatalogConfig, category_configs: list[CdnCategoryConfig]):
+        debug_log(f"Initializing CatalogManager for catalog type: {catalog_config.cdn_catalog_type}", 0)
         self.catalog_type: str = catalog_config.cdn_catalog_type
         self.catalog_root: str = catalog_config.cdn_catalog_root
         self.catalog_state_file: str = catalog_config.cdn_catalog_state_file
@@ -278,6 +279,7 @@ class CatalogManager:
 
 
 catalog_managers: dict[str, CatalogManager] = {}
+debug_log(f"catalog_managers dict made: {catalog_managers}", 2)
 
 for catalog_cfg in settings.cdn_catalogs:
     matching_categories = [category for category in settings.cdn_categories if category.cdn_category_catalog_type == catalog_cfg.cdn_catalog_type]

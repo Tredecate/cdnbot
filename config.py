@@ -109,3 +109,5 @@ class Settings(BaseSettings):
         return {catalog.cdn_catalog_type: section}
 
 settings = Settings()
+from log import debug_log
+debug_log(f"Loaded settings: {settings.model_dump()}", 2)
