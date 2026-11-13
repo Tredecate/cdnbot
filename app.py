@@ -85,8 +85,7 @@ async def getfiletree(interaction: discord.Interaction, path: str = "", ephemera
 @app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
-async def purgecache(interaction: discord.Interaction, prefix: str, ephemeral: bool = True):
-    prefix = settings.bucket_public_url.rstrip("/") + "/" + prefix.lstrip("/")
+async def purgecache(interaction: discord.Interaction, prefix: str = settings.bucket_public_url.split('://')[1], ephemeral: bool = True):
     try:
         client.purge_cache(prefix)
     except Exception as e:
@@ -126,9 +125,8 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
     await interaction.response.send_message(f"File {source} moved to {destination} in the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
-        full_source = settings.bucket_public_url.rstrip("/") + "/" + source.lstrip("/")
-        full_destination = settings.bucket_public_url.rstrip("/") + "/" + destination.lstrip("/")
-
+        full_source = f"{settings.bucket_public_url.split('://')[1].rstrip('/')}/{source.lstrip('/')}"
+        full_destination = f"{settings.bucket_public_url.split('://')[1].rstrip('/')}/{destination.lstrip('/')}"
         try:
             client.purge_cache(full_source)
         except Exception as e:
@@ -142,7 +140,7 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
     try:
         client.delete_file(source)
     except Exception as e:
-        await interaction.response.send_message(f"Failed to delete {source} from the CDN: {e}", ephemeral=True)
+        await interaction.followup.send(f"Failed to delete {source} from the CDN: {e}", ephemeral=True)
 
 
 @bot.tree.command(name="delete", description="Delete a file from the CDN")
@@ -167,7 +165,7 @@ async def delete(interaction: discord.Interaction, path: str, purge_cache: bool 
     await interaction.response.send_message(f"File {path} deleted from the CDN.", ephemeral=ephemeral)
 
     if purge_cache:
-        full_path = settings.bucket_public_url.rstrip("/") + "/" + path.lstrip("/")
+        full_path = f"{settings.bucket_public_url.split('://')[1].rstrip('/')}/{path.lstrip('/')}"
         try:
             client.purge_cache(full_path)
         except Exception as e:
