@@ -8,7 +8,7 @@ from discord import app_commands
 from config import settings
 from log import debug_log
 from bucketclient import client
-from commandux import MediaWizardView, AddCatalogItemModal, catalog_autocomplete, category_autocomplete
+from commandux import MediaWizardView, AddCatalogItemModal, DynamicButtonView, catalog_autocomplete, category_autocomplete
 from catalog_manager import catalog_managers
 
 
@@ -50,6 +50,49 @@ async def addtocatalog(interaction: discord.Interaction, catalog: str, category:
 
     modal = AddCatalogItemModal(manager, category, schema, ephemeral)
     await interaction.response.send_modal(modal)
+
+
+@bot.tree.command(name="managecatalog", description="Manage a configured CDN catalog")
+@app_commands.describe(catalog="The catalog to manage")
+@app_commands.autocomplete(catalog=catalog_autocomplete)
+@app_commands.describe(ephemeral="Whether the response should be visible to everyone or just you")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.allowed_installs(guilds=True, users=True)
+async def managecatalog(interaction: discord.Interaction, catalog: str, ephemeral: bool = True):
+    manager = catalog_managers.get(catalog)
+
+    if not manager:
+        await interaction.followup.send(f"Catalog {catalog} does not exist. Cannot manage catalog.", ephemeral=True)
+        return
+
+    options = {
+        "Refresh Catalog": (manager.refresh_catalog, None, lambda: "Refresh successful"),
+        "Check Initialization Status": (lambda: manager.is_initialized(),),
+        "Reinitialize Catalog": (manager.initialize_catalog, False, lambda: manager.failuremode),
+        "Reinitialize Catalog (Rebuild if Needed)": (manager.initialize_catalog, False, lambda: manager.failuremode, (True,)),
+        "Reinitialize Catalog (Force Rebuild) ⚠": (manager.initialize_catalog, False, lambda: manager.failuremode, (True, True)),
+        None: (lambda: None,)
+    }
+
+    view = DynamicButtonView("What would you like to do?", buttons=list(options.keys()))
+    await interaction.response.send_message("Manage your catalog:", view=view, ephemeral=ephemeral)
+    await view.wait()
+
+    choice = options[view.choice]
+
+    returned_data = "No data"
+
+    try:
+        args = choice[3] if len(choice) >= 4 else ()
+        result = choice[0](*args)
+    except Exception as e:
+        await interaction.edit_original_response(content=f"Failed to perform action: {e}", view=None)
+        return
+
+    if len(choice) > 1:
+        returned_data = choice[2]() if result == choice[1] else returned_data
+
+    await interaction.edit_original_response(content=f"Action '{view.choice}' completed. Result: {returned_data}", view=None)
 
 
 @bot.tree.command(name="getfiletree", description="Get the file tree for a given path in the CDN")
