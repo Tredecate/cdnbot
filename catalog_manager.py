@@ -45,8 +45,9 @@ class CatalogManager:
         return list(self.categories.keys())
 
 
-    def get_category_schema(self, category: str) -> dict[str, Any]:
-        self._get_state()
+    def get_category_schema(self, category: str, refresh: bool = False) -> dict[str, Any]:
+        if refresh:
+            self._get_state()
         cat_data = self._local_state[self.catalog_type].get(category)
 
         if not cat_data or cat_data.get("type") != "cdn_category":
