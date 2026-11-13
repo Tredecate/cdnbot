@@ -1,9 +1,19 @@
 <html><head><meta charset="utf-8"></head><body>
 
-<!-- toggle to switch between copying alt text and html element -->
+<!-- radio to switch between copying alt text, html element, and media link -->
 
-<label for="copyMode">Copy HTML:</label>
-<input type="checkbox" id="copyMode" name="copyMode" checked>
+<label>
+    <input type="radio" name="copyMode" value="alt" checked> Copy Alt Text
+</label>
+<label>
+    <input type="radio" name="copyMode" value="html"> Copy HTML
+</label>
+<label>
+    <input type="radio" name="copyMode" value="link"> Copy Media Link
+</label>
+<label>
+    <input type="radio" name="copyMode" value="emoji"> Copy :Emoji: Text
+</label>
 
 
 <!-- startsect:categories -->
@@ -16,21 +26,28 @@
     imgs.forEach(img => {
         img.addEventListener('click', () => {
             const html = img.outerHTML;
-            const copyMode = document.getElementById('copyMode').checked;
+            const copyMode = document.querySelector('input[name="copyMode"]:checked').value;
 
-            if (copyMode) {
+            let textToCopy;
+            if (copyMode === 'link') {
+                // copy the media link of the element
+                textToCopy = img.src || img.innerText || '';
+            } else if (copyMode === 'html') {
                 // copy the html of the element
                 textToCopy = img.textContent || html;
                 textToCopy = textToCopy.replace(/\s?data-alt\s*=\s*(["']).*?\1\s?/g, " ");
+            } else if (copyMode === 'emoji') {
+                // copy the emoji text of the element
+                textToCopy = ":" + (img.alt || img.dataset.alt.split(',')[0].trim() || '') + ":";
             } else {
                 // copy the alt text of the element
-                textToCopy = ":" + (img.alt || img.dataset.alt || '') + ":";
+                textToCopy = (img.alt || img.dataset.alt.split(',')[0].trim() || '');
             }
 
             navigator.clipboard.writeText(textToCopy).then(() => {
                 // extremely basic toast notification
                 const toast = document.createElement('div');
-                toast.textContent = `${img.alt || img.dataset.alt || 'Unknown'} copied to clipboard!`;
+                toast.textContent = `${img.alt || img.dataset.alt.split(',')[0].trim() || 'Unknown'} copied to clipboard!`;
                 toast.style.position = 'fixed';
                 toast.style.bottom = '10px';
                 toast.style.left = '10px';
