@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from typing import Any
 from pydantic import BaseModel, Field, SecretStr, field_validator, model_validator
@@ -56,8 +57,10 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def build_indexed_configs(self) -> "Settings":
-        if not self.model_extra:
-            return self
+        raw_vars: dict[str, Any] = {}
+        if self.model_extra:
+            raw_vars.update({k.lower(): v for k, v in self.model_extra.items()})
+        raw_vars.update({k.lower(): v for k, v in os.environ.items()})
 
         cat_grouped: dict[int, dict[str, Any]] = {}
         catalog_grouped: dict[int, dict[str, Any]] = {}
@@ -65,13 +68,16 @@ class Settings(BaseSettings):
         cat_pattern = re.compile(r"^(cdn_category_.*?)_(\d+)$", re.IGNORECASE)
         catalog_pattern = re.compile(r"^(cdn_catalog_.*?)_(\d+)$", re.IGNORECASE)
 
-        for key, value in list(self.model_extra.items()):
+        for key, value in raw_vars.items():
             if match := cat_pattern.match(key):
-                cat_grouped.setdefault(int(match.group(2)), {})[match.group(1).lower()] = value
-                del self.model_extra[key]
+                cat_grouped.setdefault(int(match.group(2)), {})[match.group(1)] = value
             elif match := catalog_pattern.match(key):
-                catalog_grouped.setdefault(int(match.group(2)), {})[match.group(1).lower()] = value
-                del self.model_extra[key]
+                catalog_grouped.setdefault(int(match.group(2)), {})[match.group(1)] = value
+
+        if self.model_extra:
+            for key in list(self.model_extra):
+                if cat_pattern.match(key) or catalog_pattern.match(key):
+                    del self.model_extra[key]
 
         self.cdn_categories.extend(
             CdnCategoryConfig(**cat_grouped[idx]) for idx in sorted(cat_grouped)
