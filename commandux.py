@@ -1,7 +1,11 @@
 import discord
+import json
+
+from discord import app_commands
 
 from bucketclient import client
 from config import settings
+from catalog_manager import catalog_managers, CatalogManager
 
 
 class PathModal(discord.ui.Modal, title="Set Destination Path"):
@@ -161,3 +165,78 @@ class ConfirmView(discord.ui.View):
         self.choice = False
         self.stop()
         await interaction.response.defer(ephemeral=True)
+
+
+class AddCatalogItemModal(discord.ui.Modal):
+    def __init__(self, manager: CatalogManager, category: str, schema: dict, ephemeral: bool):
+        super().__init__(title=f"Add to {manager.catalog_type} / {category}")
+        self.manager = manager
+        self.category = category
+        self.schema = schema
+        self.ephemeral = ephemeral
+        self.field_inputs: dict[str, discord.ui.TextInput] = {}
+
+        fields: list[str] = schema["fields"]
+        defaults: dict = schema["defaults"]
+
+        for field in fields[:5]:
+            has_default = field in defaults
+            default_val = defaults.get(field)
+
+            text_input = discord.ui.TextInput(
+                label=field,
+                default=str(default_val) if has_default else None,
+                required=not has_default,
+                placeholder=f"Enter {field}...",
+            )
+            self.field_inputs[field] = text_input
+            self.add_item(text_input)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=self.ephemeral)
+        defaults = self.schema["defaults"]
+        kwargs = {}
+
+        for field, text_input in self.field_inputs.items():
+            raw_val = text_input.value.strip()
+            if not raw_val and field in defaults:
+                kwargs[field] = defaults[field]
+                continue
+
+            # If the default is a list or dict, parse the input as JSON
+            if isinstance(defaults.get(field), (list, dict)):
+                try:
+                    kwargs[field] = json.loads(raw_val)
+                except json.JSONDecodeError:
+                    await interaction.followup.send(
+                        f"Invalid JSON for field `{field}`. Expected format like `{json.dumps(defaults[field])}`.",
+                        ephemeral=True,
+                    )
+                    return
+            else:
+                kwargs[field] = raw_val
+
+        try:
+            self.manager.add_to_category(self.category, **kwargs)
+        except Exception as e:
+            await interaction.followup.send(f"Failed to add to catalog: {e}", ephemeral=True)
+            return
+
+        await interaction.followup.send(
+            f"Successfully added item to `{self.manager.catalog_type}/{self.category}`!\n{self.manager.html_url}",
+            ephemeral=self.ephemeral,
+        )
+
+
+async def catalog_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    return [app_commands.Choice(name=cat_type, value=cat_type) for cat_type in catalog_managers.keys() if current.lower() in cat_type.lower()][:25]
+
+
+async def category_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    selected_catalog = interaction.namespace.catalog
+    manager = catalog_managers.get(selected_catalog)
+
+    if not manager:
+        return []
+    
+    return [app_commands.Choice(name=cat, value=cat) for cat in manager.get_category_names() if current.lower() in cat.lower()][:25]
