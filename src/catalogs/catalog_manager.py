@@ -1,11 +1,11 @@
 import json
 import copy
+
 from functools import partial
 from typing import Any
 
-from bucketclient import client
-from config import CdnCatalogConfig, CdnCategoryConfig, settings
-from log import debug_log
+from utils import bucket_client, settings, debug_log
+from utils.config import CdnCatalogConfig, CdnCategoryConfig
 
 
 class CatalogManager:
@@ -152,7 +152,7 @@ class CatalogManager:
             raise ValueError("CDN catalog state file is not configured.")
 
         try:
-            state_data = client.get_file(self.state_path)
+            state_data = bucket_client.get_file(self.state_path)
             self._remote_state = json.loads(state_data.decode("utf-8"))
             self._local_state = copy.deepcopy(self._remote_state)
         except Exception as e:
@@ -169,14 +169,14 @@ class CatalogManager:
             raise ValueError("Local state is not set. Cannot update remote state.")
 
         try:
-            client.upload_file(self.state_path, json.dumps(self._local_state, indent=4).encode("utf-8"))
+            bucket_client.upload_file(self.state_path, json.dumps(self._local_state, indent=4).encode("utf-8"))
             debug_log(f"Successfully updated remote state file: {self.state_path}")
         except Exception as e:
             debug_log(f"Failed to update remote state file {self.state_path}: {e}")
             raise ValueError("Failed to update remote state file.")
         
         try:
-            client.purge_cache(self.state_url.split('://')[1])
+            bucket_client.purge_cache(self.state_url.split('://')[1])
         except Exception as e:
             debug_log(f"Failed to purge cache for state file {self.state_url}: {e}")
 
@@ -226,14 +226,14 @@ class CatalogManager:
         debug_log(f"Generated catalog HTML: {html_content}", 2)
 
         try:
-            client.upload_file(self.html_path, html_content.encode("utf-8"))
+            bucket_client.upload_file(self.html_path, html_content.encode("utf-8"))
             debug_log(f"Successfully updated catalog HTML file: {self.html_path}")
         except Exception as e:
             debug_log(f"Failed to update catalog HTML file {self.html_path}: {e}")
             raise ValueError("Failed to update catalog HTML file.")
         
         try:
-            client.purge_cache(self.html_url.split('://')[1])
+            bucket_client.purge_cache(self.html_url.split('://')[1])
         except Exception as e:
             debug_log(f"Failed to purge cache for HTML file {self.html_url}: {e}")
 

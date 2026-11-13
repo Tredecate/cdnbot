@@ -1,8 +1,7 @@
 import boto3
 import requests
 
-from config import settings
-from log import debug_log
+from utils import settings, debug_log
 
 
 class BucketClient():
@@ -20,15 +19,19 @@ class BucketClient():
 
         self.bucket_name = settings.bucket_name
 
+
     def upload_file(self, object_name, file_data):
         self.client.put_object(Bucket=self.bucket_name, Key=object_name, Body=file_data)
+
 
     def delete_file(self, object_name):
         self.client.delete_object(Bucket=self.bucket_name, Key=object_name)
 
+
     def get_file(self, object_name):
         response = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
         return response["Body"].read()
+
 
     def get_file_tree(self, prefix):
         paginator = self.client.get_paginator("list_objects_v2")
@@ -41,6 +44,7 @@ class BucketClient():
                     file_tree.append(obj["Key"])
 
         return file_tree
+
 
     def purge_cache(self, prefix):
         if not self.cdn_cache_purge_url:
@@ -62,6 +66,7 @@ class BucketClient():
             raise ValueError("Failed to purge CDN cache.")
         
         return response.json()
+
     
-client = BucketClient()
+bucket_client = BucketClient()
 debug_log(f"Initialized BucketClient with bucket: {settings.bucket_name}, region: {settings.bucket_region}, URL: {settings.bucket_url}", level=1)

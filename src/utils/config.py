@@ -1,6 +1,7 @@
 import json
 import os
 import re
+
 from typing import Any
 from pydantic import BaseModel, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -13,6 +14,7 @@ class CdnCategoryConfig(BaseModel):
     cdn_category_fields: list[str] = Field(default_factory=list)
     cdn_category_defaults: dict[str, Any] = Field(default_factory=dict)
     cdn_category_catalog_type: str = Field(default="", min_length=0)
+
 
     @field_validator("cdn_category_fields", "cdn_category_defaults", mode="before")
     @classmethod
@@ -55,6 +57,7 @@ class Settings(BaseSettings):
         cli_parse_args=True,
     )
 
+
     @model_validator(mode="after")
     def build_indexed_configs(self) -> "Settings":
         raw_vars: dict[str, Any] = {}
@@ -87,6 +90,7 @@ class Settings(BaseSettings):
         )
         return self
 
+
     def build_catalog_state(self, catalog: CdnCatalogConfig) -> dict[str, Any]:
         matching_cats = [
             c for c in self.cdn_categories
@@ -114,6 +118,5 @@ class Settings(BaseSettings):
 
         return {catalog.cdn_catalog_type: section}
 
+
 settings = Settings()
-from log import debug_log
-debug_log(f"Loaded settings: {settings.model_dump()}", 2)

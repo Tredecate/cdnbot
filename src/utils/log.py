@@ -2,7 +2,7 @@ import reprlib
 import sys
 import logging
 
-from config import settings
+from utils import settings
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
