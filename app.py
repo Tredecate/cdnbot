@@ -34,14 +34,18 @@ bot = CDNBot(intents=intents)
 async def addtocatalog(interaction: discord.Interaction, catalog: str, category: str, ephemeral: bool = True):
     manager = catalog_managers.get(catalog)
 
-    if not manager:
-        await interaction.followup.send(f"Catalog {catalog} is not initialized. Cannot add to catalog.", ephemeral=True)
+    if not manager or not manager.is_initialized():
+        failure_mode = manager.failuremode if manager else "Manager not found"
+        debug_log(f"Failed to add item to catalog {catalog}: {failure_mode}", 1)
+        await interaction.followup.send(f"Catalog {catalog} is not initialized. Cannot add to catalog. {failure_mode}", ephemeral=True)
         return
+    
+    await interaction.response.defer(ephemeral=ephemeral)
 
     try:
         schema = manager.get_category_schema(category)
     except Exception as e:
-        await interaction.followup.send(f"Failed to get category schema for {category}: {e}", ephemeral=True)
+        await interaction.followup.send(f"Failed to get category schema for {category}: {e}", ephemeral=ephemeral)
         return
 
     modal = AddCatalogItemModal(manager, category, schema, ephemeral)

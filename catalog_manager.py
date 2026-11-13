@@ -26,29 +26,17 @@ class CatalogManager:
             c.cdn_category_name: c for c in category_configs
         }
 
-
         self._remote_state: dict[str, Any] | None = None
         self._local_state: dict[str, Any] | None = None
 
-        try:
-            self._get_state()
-        except Exception as e:
-            debug_log(f"Failed to initialize {self.catalog_type} Catalog Manager: {e}")
+        self._initialized = False
+        self.failuremode = None
 
-            if self.catalog_do_init_state:
-                debug_log("Attempting to initialize state from config.")
-                try:
-                    self._local_state = self._build_initial_state()
-                    self._update_state()
-                    self._update_catalog_html()
-                except Exception as e:
-                    debug_log(f"Failed to init state: {e}")
-                    raise ValueError(f"Failed to initialize {self.catalog_type} Catalog Manager. Could not upload initial state.")
-            else:
-                raise ValueError(f"Failed to initialize {self.catalog_type} Catalog Manager. Could not fetch remote state.")
+        self.initialize_catalog(self.catalog_do_init_state, False)
 
-        for cat_name in self.get_category_names():
-            setattr(self, f"add_{cat_name}", partial(self.add_to_category, cat_name))
+
+    def is_initialized(self) -> bool:
+        return self._initialized
 
 
     def get_category_names(self) -> list[str]:
@@ -94,6 +82,51 @@ class CatalogManager:
         self._add_media(category, item_data)
 
 
+    def refresh_catalog(self):
+        self._get_state()
+        self._update_catalog_html()
+
+
+    def initialize_catalog(self, build_initial_on_failure: bool = False, _force_rebuild: bool = False):
+        try:
+            try:
+                self._get_state()
+            except Exception as e:
+                debug_log(f"Failed to fetch remote state: {e}")
+                if build_initial_on_failure:
+                    self._local_state = self._build_initial_state()
+
+            if _force_rebuild:
+                self._local_state = self._build_initial_state()
+
+            if self._local_state is None:
+                raise ValueError("Failed to fetch remote state and build_initial_on_failure is False.")
+
+            self._update_state()
+
+            for cat_name in self.get_category_names():
+                setattr(self, f"add_{cat_name}", partial(self.add_to_category, cat_name))
+            
+            self._update_catalog_html()
+            self._did_initialize()
+            return True
+        except Exception as e:
+            self._failed_to_initialize(f"Failed to initialize catalog {self.catalog_type}: {e}.")
+            return False
+
+
+    def _did_initialize(self):
+        debug_log(f"Catalog Manager for {self.catalog_type} initialized successfully.")
+        self._initialized = True
+        self.failuremode = None
+
+
+    def _failed_to_initialize(self, error_message: str):
+        debug_log(f"Failed to initialize {self.catalog_type} Catalog Manager: {error_message}")
+        self._initialized = False
+        self.failuremode = error_message
+
+
     def _add_media(self, category: str, item_data: dict[str, Any]):
         remote_state_bkp = copy.deepcopy(self._remote_state)
         self._local_state[self.catalog_type][category]["items"].append(item_data)
@@ -110,6 +143,7 @@ class CatalogManager:
             except Exception as e:
                 debug_log(f"Rollback also failed: {e}")
             raise ValueError("Failed to update state or catalog HTML. Changes rolled back.")
+
 
     def _get_state(self):
         if not self.catalog_state_file:
@@ -245,8 +279,8 @@ class CatalogManager:
 catalog_managers: dict[str, CatalogManager] = {}
 
 for catalog_cfg in settings.cdn_catalogs:
-    matching_cats = [c for c in settings.cdn_categories if c.cdn_category_catalog_type == catalog_cfg.cdn_catalog_type]
+    matching_categories = [category for category in settings.cdn_categories if category.cdn_category_catalog_type == catalog_cfg.cdn_catalog_type]
     try:
-        catalog_managers[catalog_cfg.cdn_catalog_type] = CatalogManager(catalog_cfg, matching_cats)
+        catalog_managers[catalog_cfg.cdn_catalog_type] = CatalogManager(catalog_cfg, matching_categories)
     except Exception as e:
         debug_log(f"Skipping catalog {catalog_cfg.cdn_catalog_type}: {e}")
