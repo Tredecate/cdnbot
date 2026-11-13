@@ -4,6 +4,7 @@ import copy
 from functools import partial
 from typing import Any
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from utils import bucket_client, settings, debug_log
 from utils.config import CdnCatalogConfig, CdnCategoryConfig
@@ -88,6 +89,87 @@ class CatalogManager:
     def refresh_catalog(self):
         self._get_state()
         self._update_catalog_html()
+
+
+    def move_media_to_category_roots(self) -> str:
+        self._get_state()
+
+        if self._local_state is None:
+            raise ValueError("State is not available. Cannot move catalog media.")
+
+        section = self._local_state.get(self.catalog_type, {})
+        moved = 0
+        already_in_place = 0
+        skipped = 0
+        failures: list[str] = []
+
+        for category in section.get("meta", {}).get("categories", []):
+            category_data = section.get(category, {})
+            if category_data.get("type") != "cdn_category":
+                continue
+
+            root = category_data.get("root", "").strip("/")
+            for item in category_data.get("items", []):
+                source_url = item.get("url")
+                if not source_url:
+                    skipped += 1
+                    continue
+
+                try:
+                    source_path = self._get_bucket_path(source_url)
+                    filename = Path(source_path).name
+                    if not filename:
+                        raise ValueError("URL does not contain a filename")
+
+                    destination = f"{root}/{filename}" if root else filename
+                    if source_path == destination:
+                        already_in_place += 1
+                        continue
+
+                    try:
+                        bucket_client.get_file(destination)
+                    except Exception:
+                        pass
+                    else:
+                        raise ValueError(f"destination {destination} already exists")
+
+                    file_data = bucket_client.get_file(source_path)
+                    bucket_client.upload_file(destination, file_data)
+                    bucket_client.delete_file(source_path)
+                    item["url"] = f"{settings.bucket_public_url.rstrip('/')}/{destination}"
+                    moved += 1
+                except Exception as e:
+                    failures.append(f"{category}: {source_url} ({e})")
+
+        if moved:
+            self._update_state()
+            self._update_catalog_html()
+
+        result = (
+            f"Moved {moved} file(s); {already_in_place} already in place; "
+            f"{skipped} item(s) without media URLs."
+        )
+        if failures:
+            result += f" Failed {len(failures)} file(s): " + "; ".join(failures)
+        return result
+
+
+    @staticmethod
+    def _get_bucket_path(url: str) -> str:
+        public_url = urlsplit(settings.bucket_public_url)
+        item_url = urlsplit(url)
+
+        if item_url.netloc != public_url.netloc:
+            raise ValueError("URL is not in the configured public bucket")
+
+        public_prefix = public_url.path.rstrip("/").lstrip("/")
+        item_path = unquote(item_url.path).lstrip("/")
+        if public_prefix:
+            if not item_path.startswith(f"{public_prefix}/"):
+                raise ValueError("URL is not in the configured public bucket")
+            item_path = item_path[len(public_prefix) + 1:]
+
+        return item_path
 
 
     def initialize_catalog(self, build_initial_on_failure: bool = False, _force_rebuild: bool = False):
