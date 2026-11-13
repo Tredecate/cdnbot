@@ -1,7 +1,7 @@
 import discord
 import json
 
-from catalogs.catalog_manager import CatalogManager
+from catalogs import CatalogManager
 
 
 class AddCatalogItemModal(discord.ui.Modal):

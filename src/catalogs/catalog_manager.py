@@ -3,6 +3,7 @@ import copy
 
 from functools import partial
 from typing import Any
+from pathlib import Path
 
 from utils import bucket_client, settings, debug_log
 from utils.config import CdnCatalogConfig, CdnCategoryConfig
@@ -208,7 +209,7 @@ class CatalogManager:
 
     def _generate_catalog_html(self, state: dict[str, Any]) -> str:
         try:
-            with open("catalog_template.html", "r", encoding="utf-8") as f:
+            with open(f"{Path(__file__).parent}/catalog_template.html", "r", encoding="utf-8") as f:
                 template = f.read()
         except Exception as e:
             debug_log(f"Failed to read catalog template: {e}")

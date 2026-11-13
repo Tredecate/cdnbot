@@ -1,11 +1,13 @@
 import discord
 
 from discord import app_commands
-from ui_components import MediaWizardView, AddCatalogItemModal, DynamicButtonView, catalog_autocomplete, category_autocomplete
 
+from commandui import MediaWizardView, AddCatalogItemModal
+from commandui.components import DynamicButtonView, catalog_autocomplete, category_autocomplete
+
+from catalogs import catalog_managers
 from utils import bucket_client, settings, debug_log
 from utils.media import extract_media_from_message
-from catalogs.catalog_manager import catalog_managers
 
 
 class CDNBot(discord.Client):

@@ -2,7 +2,7 @@ import discord
 
 from discord import app_commands
 
-from catalogs.catalog_manager import catalog_managers
+from catalogs import catalog_managers
 
 
 async def catalog_autocomplete(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:

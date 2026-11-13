@@ -2,7 +2,7 @@ import discord
 import re
 import requests
 
-from utils import debug_log
+from .log import debug_log
 
 
 async def extract_media_from_message(message: discord.Message):

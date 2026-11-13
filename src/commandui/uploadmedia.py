@@ -2,9 +2,11 @@ import discord
 
 from functools import partial
 
-from ui_components import DynamicButtonView, ConfirmView, AddCatalogItemModal
+from .components import DynamicButtonView, ConfirmView
+from .addtocatalog import AddCatalogItemModal
+
 from utils import bucket_client, settings
-from catalogs.catalog_manager import catalog_managers
+from catalogs import catalog_managers
 
 
 class PathModal(discord.ui.Modal, title="Set Destination Path"):

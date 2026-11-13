@@ -1,7 +1,8 @@
 import boto3
 import requests
 
-from utils import settings, debug_log
+from .config import settings
+from .log import debug_log
 
 
 class BucketClient():
