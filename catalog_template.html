@@ -21,7 +21,7 @@
             if (copyMode) {
                 // copy the html of the element
                 textToCopy = img.textContent || html;
-                textToCopy = textToCopy.replace(/ data-alt\s*=\s*(["']).*?\1/g, " ");
+                textToCopy = textToCopy.replace(/\s?data-alt\s*=\s*(["']).*?\1\s?/g, " ");
             } else {
                 // copy the alt text of the element
                 textToCopy = ":" + (img.alt || img.dataset.alt || '') + ":";
