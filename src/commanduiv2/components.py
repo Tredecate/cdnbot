@@ -186,6 +186,7 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
 
         self._stage = stage_index
         self._page = 0
+        self.clear_items()
         self._divide_into_pages()
         await self.update_page(interaction)
         return self
@@ -259,6 +260,8 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         temp_container = self.stage.container_class(self, filtered_items[0])
         container_count = temp_container.total_children_count
         max_items_per_page = max(1, (max_components_per_page - current_count) // container_count)
+
+        debug_log(f"{len(filtered_items)} items, {container_count} container children, {current_count} current children, {max_items_per_page} max items per page.", 2)
 
         for i in range(0, len(filtered_items), max_items_per_page):
             self._pages.append(filtered_items[i:i + max_items_per_page])
