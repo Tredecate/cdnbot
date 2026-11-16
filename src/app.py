@@ -2,8 +2,9 @@ import discord
 
 from discord import app_commands
 
-from commandui import MediaWizardView, AddCatalogItemModal
+from commandui import AddCatalogItemModal
 from commandui.components import DynamicButtonView, catalog_autocomplete, category_autocomplete
+from commanduiv2.uploadpaginated import MediaProcessView
 
 from catalogs import catalog_managers
 from utils import bucket_client, settings, debug_log
@@ -212,8 +213,8 @@ async def upload_to_cdn(interaction: discord.Interaction, message: discord.Messa
         await interaction.followup.send("No media found in that message.", ephemeral=True)
         return
 
-    view = MediaWizardView(media)
-    await interaction.followup.send(embed=view.build_current_embed(), view=view, ephemeral=True)
+    view = MediaProcessView(media)
+    await interaction.followup.send(view=view, ephemeral=True)
 
 
 def main():
