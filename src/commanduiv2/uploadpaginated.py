@@ -30,7 +30,7 @@ class UploadConfigCatalogModal(discord.ui.Modal):
                 default=media_item.catalog in (None, 0)
             )] + catalog_options,
         )
-        self.add_item(discord.ui.Label(text=f"Select Catalog for {media_item.name}", component=self.catalog_select))
+        self.add_item(discord.ui.Label(text=f"Select Catalog for:", description=media_item.name, component=self.catalog_select))
 
     async def on_submit(self, interaction: discord.Interaction):
         selected_catalog = self.catalog_select.value
@@ -71,7 +71,7 @@ class UploadConfigCategoryModal(discord.ui.Modal):
                 self.add_item(discord.ui.TextDisplay("Only one category available in the selected catalog."))
             case _:
                 self.category_select = discord.ui.RadioGroup(options=category_options)
-                self.add_item(discord.ui.Label(text=f"Select Category for {media_item.name}", component=self.category_select))
+                self.add_item(discord.ui.Label(text=f"Select Category for:", description=media_item.name, component=self.category_select))
 
         self.auto_set_path = discord.ui.Checkbox(default=True)
         self.add_item(discord.ui.Label(text="Automatically set path based on category?", component=self.auto_set_path))
@@ -97,7 +97,7 @@ class UploadConfigPathModal(discord.ui.Modal):
             style=discord.TextStyle.short,
             default=media_item.path or f"etc/{media_item.name}",
         )
-        self.add_item(discord.ui.Label(text=f"Set Upload Path for {media_item.name}", component=self.path_input))
+        self.add_item(discord.ui.Label(text=f"Set Upload Path for:", description=media_item.name, component=self.path_input))
 
     async def on_submit(self, interaction: discord.Interaction):
         self.media_item.path = self.path_input.value.strip()
