@@ -361,6 +361,14 @@ class CatalogManager:
         return template
 
 
+def get_active_catalogs() -> dict[str, CatalogManager]:
+    return {cat_type: manager for cat_type, manager in catalog_managers.items() if manager.is_initialized()}
+
+
+def get_all_catalogs() -> dict[str, CatalogManager]:
+    return catalog_managers
+
+
 catalog_managers: dict[str, CatalogManager] = {}
 debug_log(f"catalog_managers dict made: {catalog_managers}", 2)
 

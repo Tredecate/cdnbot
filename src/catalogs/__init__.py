@@ -1,1 +1,1 @@
-from .catalog_manager import CatalogManager, catalog_managers
+from .catalog_manager import CatalogManager, catalog_managers, get_active_catalogs, get_all_catalogs
