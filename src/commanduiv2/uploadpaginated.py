@@ -172,7 +172,7 @@ class CategorySchemaConfigModal(discord.ui.Modal):
                 required=not has_default
             )
             self.inputs[field] = text_input
-            self.add_item(discord.ui.Label(text=f"Set value for `{field}`", component=text_input))
+            self.add_item(discord.ui.Label(text=f"Set value for:", description=f"`{field}`", component=text_input))
 
     async def on_submit(self, interaction: discord.Interaction):
         for field, text_input in self.inputs.items():
