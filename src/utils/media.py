@@ -3,6 +3,7 @@ import re
 import requests
 
 from .log import debug_log
+from .types import MediaItem
 
 
 async def extract_media_from_message(message: discord.Message):
@@ -47,7 +48,7 @@ async def process_emojis(emojis: list[str]):
 
         emoji_url = f"https://cdn.discordapp.com/emojis/{emoji_id}.webp{'?animated=true' if anim else ''}"
 
-        media.append((name + ".webp", requests.get(emoji_url).content, emoji_url))
+        media.append(MediaItem(name + ".webp", requests.get(emoji_url).content, emoji_url))
 
     debug_log(media, 2)
     return media
@@ -78,7 +79,7 @@ async def process_attachments(attachments: list[discord.Attachment]):
     if len(attachments) == 0:
         return []
 
-    media = [(attachment.filename, await attachment.read(), attachment.url) for attachment in attachments]
+    media = [MediaItem(attachment.filename, await attachment.read(), attachment.url) for attachment in attachments]
 
     debug_log(media, 2)
     return media
@@ -94,11 +95,11 @@ async def process_embeds(embeds: list[discord.Embed]):
 
     for embed in embeds:
         if embed.image:
-            media.append((embed.image.url.split("/")[-1], requests.get(embed.image.url).content, embed.image.url))
+            media.append(MediaItem(embed.image.url.split("/")[-1], requests.get(embed.image.url).content, embed.image.url))
         if embed.thumbnail:
-            media.append((embed.thumbnail.url.split("/")[-1], requests.get(embed.thumbnail.url).content, embed.thumbnail.url))
+            media.append(MediaItem(embed.thumbnail.url.split("/")[-1], requests.get(embed.thumbnail.url).content, embed.thumbnail.url))
         if embed.video:
-            media.append((embed.video.url.split("/")[-1], requests.get(embed.video.url).content, embed.video.url))
+            media.append(MediaItem(embed.video.url.split("/")[-1], requests.get(embed.video.url).content, embed.video.url))
 
     debug_log(media, 2)
     return media
@@ -110,7 +111,7 @@ async def process_stickers(stickers: list[discord.Sticker]):
     if len(stickers) == 0:
         return []
 
-    media = [(sticker.name + "." + sticker.format.name, await sticker.read(), sticker.url) for sticker in stickers if sticker.format != discord.StickerFormatType.lottie]
+    media = [MediaItem(sticker.name + "." + sticker.format.name, await sticker.read(), sticker.url) for sticker in stickers if sticker.format != discord.StickerFormatType.lottie]
 
     debug_log(media, 2)
     return media
