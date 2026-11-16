@@ -1,6 +1,8 @@
 import boto3
 import requests
 
+from botocore.exceptions import ClientError
+
 from .config import settings
 from .log import debug_log
 
@@ -32,6 +34,14 @@ class BucketClient():
     def get_file(self, object_name):
         response = self.client.get_object(Bucket=self.bucket_name, Key=object_name)
         return response["Body"].read()
+
+
+    def file_exists(self, object_name) -> bool:
+        try:
+            self.client.head_object(Bucket=self.bucket_name, Key=object_name)
+            return True
+        except ClientError:
+            return False
 
 
     def get_file_tree(self, prefix):
