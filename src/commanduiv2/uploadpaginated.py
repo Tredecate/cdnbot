@@ -94,7 +94,6 @@ class UploadConfigPathModal(discord.ui.Modal):
         self.wizard_view = wizard_view
 
         self.path_input = discord.ui.TextInput(
-            label="Upload Path",
             style=discord.TextStyle.short,
             default=media_item.path or f"etc/{media_item.name}",
         )
