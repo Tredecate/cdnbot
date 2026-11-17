@@ -226,6 +226,40 @@ class CategorySchemaConfigContainer(CountableContainer["MediaProcessView"]):
         self.add_item(action_row)
 
 
+class ReviewContainer(CountableContainer["MediaProcessView"]):
+    def __init__(self, wizard_view: "MediaProcessView", media_item: MediaItem):
+        super().__init__()
+        self.wizard_view = wizard_view
+        self.item = media_item
+
+        item_recap = (
+            f"## `{media_item.name}`\n" +
+            f"- **Path:** `{media_item.path}`\n" +
+            (
+                f"- **Overwriting:** `{media_item.overwrite_confirmed}`\n"
+                if media_item.overwrite_confirmed else ""
+            ) +
+            (
+                f"- **Catalog:** `{media_item.catalog}`\n" +
+                f"- **Category:** `{media_item.category}`\n" +
+                f"## Category Schema Data:\n" +
+                "".join(
+                    f"- **{field}:** `{value}`\n"
+                    for field, value in media_item.category_schema_data.items()
+                )
+                if media_item.catalog_configured else ""
+            )
+        )
+
+        debug_log(f"Reviewing item: {media_item.name}\n{item_recap}", 2)
+
+        self.thumbnail_section = discord.ui.Section(
+            discord.ui.TextDisplay(item_recap),
+            accessory=discord.ui.Thumbnail(media=media_item.url)
+        )
+        self.add_item(self.thumbnail_section)
+
+
 class UploadStatusContainer(CountableContainer["MediaProcessView"]):
     def __init__(self, wizard_view: "MediaProcessView", media_item: MediaItem):
         super().__init__()
@@ -264,7 +298,24 @@ class MediaProcessView(PaginatedLayoutView):
             container_class=CategorySchemaConfigContainer,
             item_filter=lambda item: (item.upload_ready and item.catalog_configured),
             controls_class=PageControls,
-            controls_args={"view": self, "success_callback": self.finish}
+            controls_args={
+                "view": self, 
+                "success_callback": self.review, 
+            },
+        ))
+
+        self.register_stage(Stage(
+            name="Review",
+            container_class=ReviewContainer,
+            item_filter=lambda item: (item.upload_ready and item.catalog_ready),
+            controls_class=PageControls,
+            controls_args={
+                "view": self, 
+                "success_callback": self.finish, 
+                "labels": ("Cancel", None, None, "Upload!"),
+                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.success),
+                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+            },
         ))
 
         self.register_stage(Stage(
@@ -334,7 +385,9 @@ class MediaProcessView(PaginatedLayoutView):
             return
 
         await self.skip_next_stage(interaction)
-        
+
+    async def review(self, interaction: discord.Interaction):
+        await self.set_stage(3, interaction)
 
     async def finish(self, interaction: discord.Interaction):
         if not interaction.response.is_done():
@@ -379,4 +432,4 @@ class MediaProcessView(PaginatedLayoutView):
         for category_schema_data in successes:
             items_by_schema_data[frozenset(category_schema_data.items())].catalog_success = True
 
-        await self.set_stage(3, interaction)
+        await self.set_stage(4, interaction)
