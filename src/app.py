@@ -201,18 +201,18 @@ async def delete(interaction: discord.Interaction, path: str, purge_cache: bool 
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
 async def upload_to_cdn(interaction: discord.Interaction, message: discord.Message):
-    await interaction.response.defer(ephemeral=True)
+    await interaction.response.defer(ephemeral=settings.ephemeral)
 
     media = await extract_media_from_message(message)
     if not media:
-        await interaction.followup.send("No media found in that message.", ephemeral=True)
+        await interaction.followup.send("No media found in that message.")
         return
 
     view = MediaProcessView(media)
     await interaction.followup.send(view=view, ephemeral=True)
 
 
-@bot.tree.command(name="setephemeral", description="Toggle whether the bot's responses are ephemeral (only visible to you) or public (visible to everyone)")
+@bot.tree.command(name="setephemeral", description="Toggle whether the bot's responses are ephemeral (private) or not (public)")
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
 async def set_ephemeral(interaction: discord.Interaction, ephemeral: bool):
