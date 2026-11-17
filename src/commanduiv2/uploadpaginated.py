@@ -203,7 +203,7 @@ class CategorySchemaConfigContainer(CountableContainer["MediaProcessView"]):
         self.category_schema = self.manager.get_category_schema(media_item.category) if self.manager else None
 
         self.thumbnail_section = discord.ui.Section(
-            discord.ui.TextDisplay(f"`{media_item.name}`\n-# Catalog: `{media_item.catalog}`\n-# Category: `{media_item.category}`"),
+            discord.ui.TextDisplay(f"`{media_item.name}`\n- **Catalog:** `{media_item.catalog}`\n- **Category:** `{media_item.category}`"),
             accessory=discord.ui.Thumbnail(media=media_item.url)
         )
         self.add_item(self.thumbnail_section)
@@ -266,9 +266,26 @@ class UploadStatusContainer(CountableContainer["MediaProcessView"]):
         self.wizard_view = wizard_view
         self.item = media_item
 
+        item_recap = (
+            f"## `{media_item.name}`\n" +
+            (
+                f"- Upload Successful!\n"
+                if media_item.upload_success else
+                f"- Upload Failed!\n"
+            ) +
+            (
+                f"- Cataloged Successfully!\n"
+                if media_item.catalog_success else
+                f"- Cataloging Failed!\n"
+                if media_item.catalog_configured else
+                ""
+            ) +
+            f"## Public URL\n{media_item.public_url}"
+        )
+
         self.thumbnail_section = discord.ui.Section(
-            discord.ui.TextDisplay(f"`{media_item.name}`\n-# Catalog: `{media_item.catalog}`\n-# Category: `{media_item.category}`\n-# Public URL: {media_item.public_url}\n-# Upload Success: {media_item.upload_success}\n-# Catalog Success: {media_item.catalog_success}"),
-            accessory=discord.ui.Thumbnail(media=media_item.url)
+            discord.ui.TextDisplay(item_recap),
+            accessory=discord.ui.Thumbnail(media=media_item.public_url if media_item.upload_success else media_item.url)
         )
         self.add_item(self.thumbnail_section)
 
