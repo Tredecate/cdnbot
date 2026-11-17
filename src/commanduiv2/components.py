@@ -269,6 +269,17 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
             return
         self._controls = self.stage.controls_class(**self.stage.controls_args)
         self.add_item(self._controls)
+
+    async def on_timeout(self):
+        debug_log("View timed out, stopping the view and disabling buttons.")
+        self.remove_item(self._controls)
+
+        for child in self.walk_children():
+            if isinstance(child, discord.ui.Button):
+                child.disabled = True
+        
+        self.stop()
+        await self._interaction.edit_original_response(view=self)
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user == self._owner:
