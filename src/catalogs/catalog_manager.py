@@ -66,19 +66,22 @@ class CatalogManager:
     def add_batch_to_category(self, batch: dict[str, list[dict[str, Any]]]):
         self._get_state()
         processed_categories = {}
+        successful_additions = []
 
         for category, items in batch.items():
             section = self._local_state.get(self.catalog_type, {})
             cat_data = section.get(category)
 
             if not cat_data or cat_data.get("type") != "cdn_category":
-                raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+                debug_log(f"Unknown category {category} in catalog {self.catalog_type}")
+                continue
 
             allowed_fields = cat_data.get("fields", [])
             defaults = cat_data.get("defaults", {})
             processed_categories[category] = []
 
             for item in items:
+                successful_additions.append(item)
                 item_data = {}
                 for field in allowed_fields:
                     if field in item and item[field] is not None and item[field] != "":
@@ -86,11 +89,16 @@ class CatalogManager:
                     elif field in defaults:
                         item_data[field] = defaults[field]
                     else:
-                        raise ValueError(f"Missing required field {field} for category {category}.")
+                        successful_additions.remove(item)
+                        debug_log(f"Missing required field {field} for category {category}.")
+                        break
                 
                 processed_categories[category].append(item_data)
 
+        debug_log(f"Adding batch to categories: {processed_categories}", 2)
+
         self._add_media(list(processed_categories.keys()), processed_categories)
+        return successful_additions
 
 
     def add_to_category(self, category: str, **kwargs: Any):

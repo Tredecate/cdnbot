@@ -355,18 +355,28 @@ class MediaProcessView(PaginatedLayoutView):
                     item.upload_success = True
 
         items_to_catalog = [item for item in uploads if item.upload_success and item.catalog_configured and item.catalog_ready]
+
+        debug_log(f"Items to upload: {uploads}", 2)
+        debug_log(f"Items to catalog: {items_to_catalog}", 2)
         items_by_catalog = {}
+        items_by_schema_data = {}
 
         for item in items_to_catalog:
-            items_by_catalog.setdefault(item.catalog, []).append(item)
+            items_by_catalog.setdefault(item.catalog, {}).setdefault(item.category, []).append(item.category_schema_data)
+            items_by_schema_data[frozenset(item.category_schema_data.items())] = item
 
-        try:
-            get_active_catalogs().get(item.catalog).add_batch_to_category(items_by_catalog)
-        except Exception as e:
-            for item in items_to_catalog:
-                item.catalog_success = False
-        else:
-            for item in items_to_catalog:
-                item.catalog_success = True
+        debug_log(f"Items by catalog: {items_by_catalog}", 2)
+
+        for catalog, items_by_category in items_by_catalog.items():
+            debug_log(f"Adding items to catalog {catalog}")
+            debug_log(f"Items by category: {items_by_category}", 2)
+            try:
+                successes = get_active_catalogs().get(catalog).add_batch_to_category(items_by_category)
+            except Exception as e:
+                debug_log(f"Error adding items to catalog: {e}", 1)
+                successes = []
+
+        for category_schema_data in successes:
+            items_by_schema_data[frozenset(category_schema_data.items())].catalog_success = True
 
         await self.set_stage(3, interaction)
