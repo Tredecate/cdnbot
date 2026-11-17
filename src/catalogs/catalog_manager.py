@@ -180,11 +180,11 @@ class CatalogManager:
             self._update_catalog_html()
 
         result = (
-            f"Moved {moved} file(s); {already_in_place} already in place; "
-            f"{skipped} item(s) without media URLs."
+            f"Moved {moved} file(s); {already_in_place} already in place; \n"
+            f"{skipped} item(s) without media URLs.\n"
         )
         if failures:
-            result += f" Failed {len(failures)} file(s): " + "; ".join(failures)
+            result += f" Failed {len(failures)} file(s): \n" + ";\n ".join(failures)
         return result
 
 
