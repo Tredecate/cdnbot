@@ -282,7 +282,14 @@ class MediaProcessView(PaginatedLayoutView):
             container_class=UploadConfigContainer, 
             item_filter=lambda item: True,
             controls_class=PageControls, 
-            controls_args={"view": self, "success_callback": self.overwrite_check}
+            controls_args={
+                "view": self, 
+                "success_callback": self.overwrite_check, 
+                "labels": ("Cancel", None, None, "Next"),
+                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.primary),
+                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+                "enable_finish_func": lambda: any(item.upload_configured for item in self.items),
+            },
         ))
 
         self.register_stage(Stage(
@@ -290,7 +297,14 @@ class MediaProcessView(PaginatedLayoutView):
             container_class=OverwriteToggleContainer,
             item_filter=lambda item: item.overwrite_risk,
             controls_class=PageControls,
-            controls_args={"view": self, "success_callback": self.category_check}
+            controls_args={
+                "view": self, 
+                "success_callback": self.category_check, 
+                "labels": ("Cancel", None, None, "Next"),
+                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.primary),
+                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+                "enable_finish_func": lambda: any(item.upload_ready for item in self.items),
+            },
         ))
 
         self.register_stage(Stage(
@@ -301,6 +315,10 @@ class MediaProcessView(PaginatedLayoutView):
             controls_args={
                 "view": self, 
                 "success_callback": self.review, 
+                "labels": ("Cancel", None, None, "Review"),
+                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.primary),
+                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+                "enable_finish_func": lambda: any(item.catalog_ready for item in self.items),
             },
         ))
 
@@ -323,12 +341,16 @@ class MediaProcessView(PaginatedLayoutView):
             container_class=UploadStatusContainer,
             item_filter=lambda item: (item.upload_ready and item.catalog_ready),
             controls_class=PageControls,
-            controls_args={"view": self}
+            controls_args={
+                "view": self, 
+                "labels": ("Exit", None, None, "Exit"),
+                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.danger),
+                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+            },
         ))
 
         self.items = media_candidates
         debug_log("Init finish")
-
 
     async def overwrite_check(self, interaction: discord.Interaction):
         if not interaction.response.is_done():
