@@ -287,16 +287,12 @@ class MediaProcessView(PaginatedLayoutView):
         debug_log(f"Requested uploads: {uploads}", 2)
 
         # Asynchronously check if any of the paths already exist in the bucket and set overwrite flag accordingly
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            requests = {executor.submit(bucket_client.get_file, item.path): item for item in uploads}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            file_exist_checks = {executor.submit(bucket_client.file_exists, item.path): item for item in uploads}
 
-            for result in concurrent.futures.as_completed(requests):
-                item = requests[result]
-                try:
-                    result.result()
-                except Exception: pass
-                else:
-                    item.overwrite_risk = True
+            for file_exists_response in concurrent.futures.as_completed(file_exist_checks):
+                item = file_exist_checks[file_exists_response]
+                item.overwrite_risk = file_exists_response.result()
 
         if any(not item.upload_ready for item in uploads):
             debug_log("Overwrite risk found!")
@@ -346,18 +342,31 @@ class MediaProcessView(PaginatedLayoutView):
 
         uploads = [item for item in self.items if item.upload_ready and item.catalog_ready]
 
-        for item in uploads:
-            try:
-                bucket_client.upload_file(item.path, item.data)
-            except Exception as e:
-                item.upload_success = False
-            else:
-                item.upload_success = True
+        with concurrent.futures.ThreadPoolExecutor(max_workers=6) as executor:
+            upload_futures = {executor.submit(bucket_client.upload_file, item.path, item.data): item for item in uploads}
+
+            for upload_future in concurrent.futures.as_completed(upload_futures):
+                item = upload_futures[upload_future]
                 try:
-                    get_active_catalogs().get(item.catalog).add_to_category(item.category, **item.category_schema_data)
+                    upload_future.result()
                 except Exception as e:
-                    item.catalog_success = False
+                    item.upload_success = False
                 else:
-                    item.catalog_success = True
+                    item.upload_success = True
+
+        items_to_catalog = [item for item in uploads if item.upload_success and item.catalog_configured and item.catalog_ready]
+        items_by_catalog = {}
+
+        for item in items_to_catalog:
+            items_by_catalog.setdefault(item.catalog, []).append(item)
+
+        try:
+            get_active_catalogs().get(item.catalog).add_batch_to_category(items_by_catalog)
+        except Exception as e:
+            for item in items_to_catalog:
+                item.catalog_success = False
+        else:
+            for item in items_to_catalog:
+                item.catalog_success = True
 
         await self.set_stage(3, interaction)
