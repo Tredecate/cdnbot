@@ -74,6 +74,7 @@ class PageControls(discord.ui.ActionRow):
             success_callback=None, cancel_callback=None, 
             labels=("Cancel", "Back", "Next", "Finish"), 
             styles=(discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.primary, discord.ButtonStyle.success),
+            emojis=(None, None, None, None),
             enable_finish_func=lambda: True
             ):
         super().__init__()
@@ -83,6 +84,7 @@ class PageControls(discord.ui.ActionRow):
 
         self.cancel_button.label, self.back_button.label, self.next_button.label, self.finish_button.label = labels
         self.cancel_button.style, self.back_button.style, self.next_button.style, self.finish_button.style = styles
+        self.cancel_button.emoji, self.back_button.emoji, self.next_button.emoji, self.finish_button.emoji = emojis
 
         self.back_button.disabled = view.is_first_page
         self.next_button.disabled = view.is_last_page
