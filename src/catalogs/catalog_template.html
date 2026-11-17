@@ -1,26 +1,35 @@
 <html><head>
 <meta charset="utf-8">
 <style>
-  :root {
-    color-scheme: light dark;
-    font-family: system-ui, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    body { background: #121212; color: #e0e0e0; }
-  }
+    :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        --primary: #121212;
+        --bg: #e0e0e0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --primary: #e0e0e0;
+            --bg: #121212;
+        }
+    }
+  
+    body { background: var(--bg); color: var(--primary); }
+    .toast-notification { background: var(--primary); color: var(--bg); }
 </style>
 </head><body>
 
 <!-- radio to switch between copying alt text, html element, and media link -->
 
 <label>
-    <input type="radio" name="copyMode" value="alt" checked> Copy Alt Text
-</label>
-<label>
     <input type="radio" name="copyMode" value="html"> Copy HTML
 </label>
 <label>
     <input type="radio" name="copyMode" value="link"> Copy Media Link
+</label>
+<label>
+    <input type="radio" name="copyMode" value="alt" checked> Copy Alt Text
 </label>
 <label>
     <input type="radio" name="copyMode" value="emoji"> Copy :Emoji: Text
@@ -62,15 +71,13 @@
                 toast.style.position = 'fixed';
                 toast.style.bottom = '10px';
                 toast.style.left = '10px';
-                toast.style.color = '#3f3f3f'
-                toast.style.backgroundColor = 'lightgray';
-                toast.style.border = '1px solid #ccc';
+                toast.className = 'toast-notification';
                 toast.style.padding = '10px';
                 toast.style.zIndex = '1000';
                 document.body.appendChild(toast);
                 setTimeout(() => {
                     document.body.removeChild(toast);
-                }, 2000);
+                }, 3000);
             }).catch(err => {
                 console.error('Failed to copy: ', err);
             });
