@@ -139,10 +139,7 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
         await interaction.response.send_message(f"File {source} does not exist in the CDN: {e}", ephemeral=True)
         return
 
-    try:
-        bucket_client.get_file(destination)
-    except Exception: pass
-    else:
+    if bucket_client.file_exists(destination):
         await interaction.response.send_message(f"File {destination} already exists in the CDN. Cannot move {source} to {destination}.", ephemeral=True)
         return
     
@@ -180,10 +177,8 @@ async def move(interaction: discord.Interaction, source: str, destination: str, 
 @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
 @app_commands.allowed_installs(guilds=True, users=True)
 async def delete(interaction: discord.Interaction, path: str, purge_cache: bool = True, ephemeral: bool = True):
-    try:
-        bucket_client.get_file(path)
-    except Exception as e:
-        await interaction.response.send_message(f"File {path} does not exist in the CDN: {e}", ephemeral=True)
+    if not bucket_client.file_exists(path):
+        await interaction.response.send_message(f"File {path} does not exist in the CDN.", ephemeral=True)
         return
 
     try:
