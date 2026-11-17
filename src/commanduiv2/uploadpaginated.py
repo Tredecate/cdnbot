@@ -113,10 +113,10 @@ class UploadConfigContainer(CountableContainer["MediaProcessView"]):
 
         self.header = self.add_item(discord.ui.Section(
             discord.ui.TextDisplay(
-                f"# Configure upload for:\n`{media_item.name}`\n" + 
-                f"## Selected Catalog\n- `{self.media_item.catalog}`\n" +
-                f"## Selected Category\n- `{self.media_item.category}`\n" +
-                f"## Upload Path\n- `{self.media_item.path}`"
+                f"## Configure upload for:\n**`{media_item.name}`**\n" + 
+                f"### Selected Catalog\n- `{self.media_item.catalog}`\n" +
+                f"### Selected Category\n- `{self.media_item.category}`\n" +
+                f"### Upload Path\n- `{self.media_item.path}`"
             ), accessory=discord.ui.Thumbnail(media=media_item.url)
         ))
         
@@ -202,8 +202,19 @@ class CategorySchemaConfigContainer(CountableContainer["MediaProcessView"]):
         self.manager = get_active_catalogs().get(media_item.catalog)
         self.category_schema = self.manager.get_category_schema(media_item.category) if self.manager else None
 
+        item_recap = [
+            f"## `{media_item.name}`\n",
+            f"- **Catalog:** `{media_item.catalog}`\n",
+            f"- **Category:** `{media_item.category}`\n",
+            f"## Category Schema Data:\n",
+            *(
+                f"- **{field}:** `{value}`\n"
+                for field, value in media_item.category_schema_data.items()
+            )
+        ]
+
         self.thumbnail_section = discord.ui.Section(
-            discord.ui.TextDisplay(f"`{media_item.name}`\n- **Catalog:** `{media_item.catalog}`\n- **Category:** `{media_item.category}`"),
+            discord.ui.TextDisplay("".join(item_recap)),
             accessory=discord.ui.Thumbnail(media=media_item.url)
         )
         self.add_item(self.thumbnail_section)
