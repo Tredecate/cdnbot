@@ -347,9 +347,10 @@ class MediaProcessView(PaginatedLayoutView):
             controls_args={
                 "view": self, 
                 "success_callback": self.finish, 
-                "labels": ("Cancel", None, None, "Upload!"),
-                "styles": (discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.success),
-                "emojis": (None, discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
+                "cancel_callback": self.redo,
+                "labels": ("Redo", None, None, "Upload!"),
+                "styles": (discord.ButtonStyle.primary, discord.ButtonStyle.secondary, discord.ButtonStyle.secondary, discord.ButtonStyle.success),
+                "emojis": (discord.PartialEmoji.from_str("↩️"), discord.PartialEmoji.from_str("left_btn:1286185850757058675"), discord.PartialEmoji.from_str("right_btn:1286185838874460251"), None),
             },
         ))
 
@@ -368,6 +369,9 @@ class MediaProcessView(PaginatedLayoutView):
 
         self.items = media_candidates
         debug_log("Init finish")
+
+    async def redo(self, interaction: discord.Interaction):
+        await self.set_stage(0, interaction)
 
     async def overwrite_check(self, interaction: discord.Interaction):
         if not interaction.response.is_done():
