@@ -1,3 +1,4 @@
+import io
 import discord
 
 from discord import app_commands
@@ -106,8 +107,15 @@ async def getfiletree(interaction: discord.Interaction, path: str = "", ephemera
     except Exception as e:
         await interaction.response.send_message(f"Failed to get file tree for {path}: {e}", ephemeral=True)
         return
+
+    response_message = f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```"
+    response_upload = discord.utils.MISSING
+
+    if len(response_message) > 2000:
+        response_message = f"File tree for {path}:"
+        response_upload = discord.File(io.BytesIO("\n".join(sorted(file_tree)).encode()), filename="file_tree.txt")
     
-    await interaction.response.send_message(f"File tree for {path}:\n```\n{"\n".join(sorted(file_tree))}\n```", ephemeral=ephemeral)
+    await interaction.response.send_message(response_message, file=response_upload, ephemeral=ephemeral)
 
 
 @bot.tree.command(name="purgecache", description="Purge the cache for all files under a given prefix in the CDN")
