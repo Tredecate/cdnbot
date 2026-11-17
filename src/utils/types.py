@@ -1,6 +1,10 @@
 import discord
+import inspect
 
 from dataclasses import dataclass
+from time import perf_counter
+
+from utils.log import debug_log
 
 from .config import settings
 
@@ -79,3 +83,24 @@ class PostInitMeta(type):
         if hasattr(instance, "__post_init__"):
             instance.__post_init__()
         return instance
+
+
+class Timer:
+    _timers: dict[tuple[str, str], float] = {}
+
+    @classmethod
+    def start(cls):
+        caller = inspect.stack()[1]
+
+        cls._timers[(caller.filename, caller.function)] = perf_counter()
+
+    @classmethod
+    def stop(cls):
+        end_time = perf_counter()
+
+        caller = inspect.stack()[1]
+        start_time = cls._timers.pop((caller.filename, caller.function), None)
+
+        if start_time is not None:
+            total = end_time - start_time
+            debug_log(f"[{caller.function}] executed in {total:.4f}s", 2)
