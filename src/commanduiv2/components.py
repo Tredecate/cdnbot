@@ -49,34 +49,6 @@ class ToggleButton(discord.ui.Button):
         await self.view.update_page(interaction)
 
 
-class NextButton(discord.ui.Button):
-    def __init__(self, label: str = "Next"):
-        super().__init__(label=label, style=discord.ButtonStyle.primary)
-
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        if hasattr(self.view, "next_stage"):
-            view = self.view.next_stage()
-            if view is None:
-                await interaction.delete_original_response()
-            else:
-                await interaction.edit_original_response(view=view)
-
-
-class BackButton(discord.ui.Button):
-    def __init__(self, label: str = "Back"):
-        super().__init__(label=label, style=discord.ButtonStyle.secondary)
-
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer()
-        if hasattr(self.view, "prev_stage"):
-            view = self.view.prev_stage()
-            if view is None:
-                await interaction.delete_original_response()
-            else:
-                await interaction.edit_original_response(view=view)
-
-
 class ModalSpawnButton(discord.ui.Button):
     def __init__(self, label: str, modal: discord.ui.Modal, disabled: bool = False):
         super().__init__(label=label, style=discord.ButtonStyle.primary)
