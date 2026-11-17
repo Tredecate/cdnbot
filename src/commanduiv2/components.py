@@ -69,7 +69,13 @@ class CountableContainer[ViewT: discord.ui.View](discord.ui.Container[ViewT]):
 
 
 class PageControls(discord.ui.ActionRow):
-    def __init__(self, view: discord.ui.View, success_callback=None, cancel_callback=None, labels=("Cancel", "Back", "Next", "Finish"), styles=(discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.primary, discord.ButtonStyle.success)):
+    def __init__(
+            self, view: discord.ui.View, 
+            success_callback=None, cancel_callback=None, 
+            labels=("Cancel", "Back", "Next", "Finish"), 
+            styles=(discord.ButtonStyle.danger, discord.ButtonStyle.secondary, discord.ButtonStyle.primary, discord.ButtonStyle.success),
+            enable_finish_func=lambda: True
+            ):
         super().__init__()
         self.success_callback = success_callback
         self.cancel_callback = cancel_callback
@@ -80,6 +86,8 @@ class PageControls(discord.ui.ActionRow):
 
         self.back_button.disabled = view.is_first_page
         self.next_button.disabled = view.is_last_page
+
+        self.finish_button.disabled = not enable_finish_func()
 
     @discord.ui.button()
     async def cancel_button(self, interaction: discord.Interaction, button: discord.ui.Button):
