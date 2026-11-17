@@ -254,14 +254,21 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         Timer.stop()
 
     def _build_header(self):
-        pass
+        if self.stage.header_class is None:
+            return
+        self.add_item(self.stage.header_class(**self.stage.header_args))
 
     def _build_page(self):
+        if self.stage.container_class is None:
+            return
         for item in self._pages[self._page]:
             self.add_item(self.stage.container_class(self, item))
 
     def _build_controls(self):
-        self.add_item(self.stage.controls_class(**self.stage.controls_args))
+        if self.stage.controls_class is None:
+            return
+        self._controls = self.stage.controls_class(**self.stage.controls_args)
+        self.add_item(self._controls)
     
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user == self._owner:

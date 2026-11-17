@@ -64,12 +64,15 @@ class MediaItem:
 
 class Stage:
     def __init__(
-            self, name: str = None, 
+            self, name: str = None,
+            header_class: type[discord.ui.Item] = None, header_args: dict = {},
             container_class: type[discord.ui.Container] = None, container_args: dict = {},
             controls_class: type = None, controls_args: dict = {},
             item_filter: callable = lambda item: True
         ):
         self.name = name
+        self.header_class = header_class
+        self.header_args = header_args
         self.container_class = container_class
         self.container_args = container_args
         self.controls_class = controls_class

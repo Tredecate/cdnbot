@@ -457,6 +457,7 @@ class MediaProcessView(PaginatedLayoutView):
         items_by_catalog = {}
         items_by_schema_data = {}
         catalog_successes = []
+        catalog_urls = []
 
         for item in items_to_catalog:
             items_by_catalog.setdefault(item.catalog, {}).setdefault(item.category, []).append(item.category_schema_data)
@@ -468,12 +469,18 @@ class MediaProcessView(PaginatedLayoutView):
             debug_log(f"Adding items to catalog {catalog}")
             debug_log(f"Items by category: {items_by_category}", 2)
             try:
-                catalog_successes = get_active_catalogs().get(catalog).add_batch_to_category(items_by_category)
+                catalog_successes.extend(get_active_catalogs().get(catalog).add_batch_to_category(items_by_category))
+                catalog_urls.append(get_active_catalogs().get(catalog).html_url)
             except Exception as e:
                 debug_log(f"Error adding items to catalog: {e}", 1)
-                catalog_successes = []
 
         for category_schema_data in catalog_successes:
             items_by_schema_data[frozenset(category_schema_data.items())].catalog_success = True
+
+        if catalog_urls:
+            self._stages[self.stage_num + 1].header_class = discord.ui.TextDisplay
+            self._stages[self.stage_num + 1].header_args = {
+                "content": "## Catalogs Updated:\n" + "\n".join(f"- {url}" for url in catalog_urls)
+            }
 
         await self.set_stage(4, interaction)
