@@ -131,8 +131,10 @@ class PageControls(discord.ui.ActionRow):
 
 
 class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
-    def __init__(self):
+    def __init__(self, interaction: discord.Interaction = None):
         super().__init__(timeout=300)
+        self._interaction = interaction
+        self._owner = interaction.user
         self._page = self._page if hasattr(self, "_page") else 0
         self._pages = self._pages if hasattr(self, "_pages") else []
 
@@ -260,3 +262,10 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
 
     def _build_controls(self):
         self.add_item(self.stage.controls_class(**self.stage.controls_args))
+    
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user == self._owner:
+            return True
+
+        await interaction.response.defer()
+        return False

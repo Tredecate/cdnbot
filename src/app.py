@@ -208,8 +208,8 @@ async def upload_to_cdn(interaction: discord.Interaction, message: discord.Messa
         await interaction.followup.send("No media found in that message.")
         return
 
-    view = MediaProcessView(media)
-    await interaction.followup.send(view=view, ephemeral=True)
+    view = MediaProcessView(media, interaction=interaction)
+    await interaction.followup.send(view=view)
 
 
 @bot.tree.command(name="setephemeral", description="Toggle whether the bot's responses are ephemeral (private) or not (public)")

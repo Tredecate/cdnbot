@@ -291,8 +291,8 @@ class UploadStatusContainer(CountableContainer["MediaProcessView"]):
 
 
 class MediaProcessView(PaginatedLayoutView):
-    def __init__(self, media_candidates: list[MediaItem]):
-        super().__init__()
+    def __init__(self, media_candidates: list[MediaItem], **kwargs):
+        super().__init__(**kwargs)
 
         self.register_stage(Stage(
             name="Select Uploads and Configure",
