@@ -63,6 +63,36 @@ class CatalogManager:
         }
 
 
+    def add_batch_to_category(self, batch: dict[str, list[dict[str, Any]]]):
+        self._get_state()
+        processed_categories = {}
+
+        for category, items in batch.items():
+            section = self._local_state.get(self.catalog_type, {})
+            cat_data = section.get(category)
+
+            if not cat_data or cat_data.get("type") != "cdn_category":
+                raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+
+            allowed_fields = cat_data.get("fields", [])
+            defaults = cat_data.get("defaults", {})
+            processed_categories[category] = []
+
+            for item in items:
+                item_data = {}
+                for field in allowed_fields:
+                    if field in item and item[field] is not None and item[field] != "":
+                        item_data[field] = item[field]
+                    elif field in defaults:
+                        item_data[field] = defaults[field]
+                    else:
+                        raise ValueError(f"Missing required field {field} for category {category}.")
+                
+                processed_categories[category].append(item_data)
+
+        self._add_media(list(processed_categories.keys()), processed_categories)
+
+
     def add_to_category(self, category: str, **kwargs: Any):
         self._get_state()
         section = self._local_state.get(self.catalog_type, {})
@@ -209,9 +239,16 @@ class CatalogManager:
         self.failuremode = error_message
 
 
-    def _add_media(self, category: str, item_data: dict[str, Any]):
+    def _add_media(self, category: str | list[str], item_data: dict[str, Any] | dict[str, list[dict[str, Any]]]):
         remote_state_bkp = copy.deepcopy(self._remote_state)
-        self._local_state[self.catalog_type][category]["items"].append(item_data)
+
+        if isinstance(category, str):
+            self._local_state[self.catalog_type][category]["items"].append(item_data)
+        elif isinstance(category, list):
+            for cat, item_list in item_data.items():
+                self._local_state[self.catalog_type][cat]["items"].extend(item_list)
+        else:
+            raise ValueError("Category must be a string or a list of strings.")
 
         try:
             self._update_state()
