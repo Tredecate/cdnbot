@@ -142,7 +142,8 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         self.items = self.items if hasattr(self, "items") else []
 
     def __post_init__(self):
-        self._initial_render()
+        self._divide_into_pages()
+        self._render_page()
 
     @property
     def stage(self) -> Stage:
@@ -169,7 +170,6 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
 
         self._stage = stage_index
         self._page = 0
-        self.clear_items()
         self._divide_into_pages()
         await self.update_page(interaction)
         Timer.stop()
@@ -227,14 +227,11 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         self._build_controls()
         Timer.stop()
 
-    def _initial_render(self):
-        self._build_header()
-        self._build_controls()
-        self._divide_into_pages()
-        self._render_page()
-
     def _divide_into_pages(self, max_components_per_page: int = 40):
         Timer.start()
+        self.clear_items()
+        self._build_header()
+        self._build_controls()
         self._pages.clear()
         current_count = self.total_children_count
 
