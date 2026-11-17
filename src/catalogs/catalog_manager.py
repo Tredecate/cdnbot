@@ -365,7 +365,7 @@ class CatalogManager:
 
     def _parse_state_to_html(self, state_section: dict, template: str) -> str:
         debug_log(f"Parsing state section to HTML: {state_section}", 2)
-        section_meta = state_section.get("meta", None)
+        section_meta = state_section.get("meta")
         
         if section_meta is None or section_meta.get("type", "") != "cdn_section":
             raise ValueError("State section is invalid or missing 'meta' information.")
@@ -374,7 +374,7 @@ class CatalogManager:
         generated_blocks: list[str] = []
 
         for category in section_meta.get("categories", []):
-            category_data = state_section.get(category, None)
+            category_data = state_section.get(category)
 
             if category_data is None or category_data.get("type", "") != "cdn_category":
                 debug_log(f"Category '{category}' is missing or invalid.")

@@ -48,7 +48,7 @@ class UploadConfigCategoryModal(discord.ui.Modal):
         self.category_select = None
         self.single_category = None
 
-        selected_catalog = get_active_catalogs().get(media_item.catalog, None)
+        selected_catalog = get_active_catalogs().get(media_item.catalog)
 
         if selected_catalog is None:
             self.add_item(discord.ui.TextDisplay("No catalog selected. Please select a catalog first."))
@@ -160,7 +160,7 @@ class CategorySchemaConfigModal(discord.ui.Modal):
 
         for field in fields[:5]:
             has_default = field in defaults
-            default_val = defaults.get(field, None)
+            default_val = defaults.get(field)
 
             if media_item.category_schema_data and field in media_item.category_schema_data:
                 default_val = media_item.category_schema_data[field]
@@ -199,7 +199,7 @@ class CategorySchemaConfigContainer(CountableContainer["MediaProcessView"]):
         self.wizard_view = wizard_view
         self.item = media_item
 
-        self.manager = get_active_catalogs().get(media_item.catalog, None)
+        self.manager = get_active_catalogs().get(media_item.catalog)
         self.category_schema = self.manager.get_category_schema(media_item.category) if self.manager else None
 
         self.thumbnail_section = discord.ui.Section(
@@ -318,7 +318,7 @@ class MediaProcessView(PaginatedLayoutView):
                     item.category_schema_data = {}
                 for field in fields:
                     if field not in item.category_schema_data:
-                        item.category_schema_data[field] = defaults.get(field, None)
+                        item.category_schema_data[field] = defaults.get(field)
 
                 fuzzy_matches = {
                     item.public_url: ["url", "link", "public_url", "src", "data"],
