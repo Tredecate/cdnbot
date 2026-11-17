@@ -212,6 +212,14 @@ async def upload_to_cdn(interaction: discord.Interaction, message: discord.Messa
     await interaction.followup.send(view=view, ephemeral=True)
 
 
+@bot.tree.command(name="setephemeral", description="Toggle whether the bot's responses are ephemeral (only visible to you) or public (visible to everyone)")
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.allowed_installs(guilds=True, users=True)
+async def set_ephemeral(interaction: discord.Interaction, ephemeral: bool):
+    settings.ephemeral = ephemeral
+    await interaction.response.send_message(f"Ephemeral responses set to {ephemeral}.", ephemeral=True)
+
+
 def main():
     debug_log("Starting CDNBot...", 0)
     debug_log(f"Settings: {settings}", 2)

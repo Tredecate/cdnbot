@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     cdn_catalogs: list[CdnCatalogConfig] = Field(default_factory=list)
 
     debug_level: int = Field(default=0, ge=0, le=2)
+    ephemeral: bool = Field(default=True)
 
     model_config = SettingsConfigDict(
         env_file=".env",
