@@ -108,7 +108,7 @@ class CatalogManager:
             if category_data.get("type") != "cdn_category":
                 continue
 
-            root = category_data.get("root", "").strip("/")
+            root = category_data.get("root", "").rstrip("/")
             for item in category_data.get("items", []):
                 source_url = item.get("url")
                 if not source_url:
@@ -126,11 +126,7 @@ class CatalogManager:
                         already_in_place += 1
                         continue
 
-                    try:
-                        bucket_client.get_file(destination)
-                    except Exception:
-                        pass
-                    else:
+                    if bucket_client.file_exists(destination):
                         raise ValueError(f"destination {destination} already exists")
 
                     file_data = bucket_client.get_file(source_path)
@@ -164,6 +160,7 @@ class CatalogManager:
 
         public_prefix = public_url.path.rstrip("/").lstrip("/")
         item_path = unquote(item_url.path).lstrip("/")
+        
         if public_prefix:
             if not item_path.startswith(f"{public_prefix}/"):
                 raise ValueError("URL is not in the configured public bucket")
