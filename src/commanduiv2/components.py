@@ -1,7 +1,7 @@
 import discord
 import inspect
 
-from utils import Stage, PostInitMeta, debug_log
+from utils import Stage, PostInitMeta, Timer, debug_log
 
 
 class ToggleButton(discord.ui.Button):
@@ -159,6 +159,7 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         return self._page >= len(self._pages) - 1
 
     async def set_stage(self, stage_index: int, interaction: discord.Interaction):
+        Timer.start()
         debug_log(f"Setting stage to {stage_index} (current: {self._stage})")
         if stage_index < 0 or stage_index >= len(self._stages):
             await interaction.response.defer()
@@ -169,6 +170,7 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         self.clear_items()
         self._divide_into_pages()
         await self.update_page(interaction)
+        Timer.stop()
         return self
 
     async def skip_next_stage(self, interaction: discord.Interaction):
@@ -215,11 +217,13 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
                     setattr(stage_data, attr, getattr(previous_stage, attr))
 
     def _render_page(self):
+        Timer.start()
         self.clear_items()
 
         self._build_header()
         self._build_page()
         self._build_controls()
+        Timer.stop()
 
     def _initial_render(self):
         self._build_header()
@@ -228,6 +232,7 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
         self._render_page()
 
     def _divide_into_pages(self, max_components_per_page: int = 40):
+        Timer.start()
         self._pages.clear()
         current_count = self.total_children_count
 
@@ -245,6 +250,7 @@ class PaginatedLayoutView(discord.ui.LayoutView, metaclass=PostInitMeta):
 
         for i in range(0, len(filtered_items), max_items_per_page):
             self._pages.append(filtered_items[i:i + max_items_per_page])
+        Timer.stop()
 
     def _build_header(self):
         pass
