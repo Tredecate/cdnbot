@@ -5,13 +5,15 @@ from catalogs import CatalogManager
 
 
 class AddCatalogItemModal(discord.ui.Modal):
-    def __init__(self, manager: CatalogManager, category: str, schema: dict, ephemeral: bool, prefill_data: dict = {}, spawn_interaction: discord.Interaction | None = None):
+    def __init__(self, manager: CatalogManager, category: str, schema: dict, ephemeral: bool, prefill_data: dict = {}, spawn_interaction: discord.Interaction | None = None, replace=False):
         super().__init__(title=f"Add to {manager.catalog_type} / {category}")
         self.manager = manager
         self.category = category
         self.schema = schema
         self.ephemeral = ephemeral
         self.spawn_interaction = spawn_interaction
+        self.replace = replace
+        self.prefill_data = prefill_data
         self.field_inputs: dict[str, discord.ui.TextInput] = {}
 
         fields: list[str] = schema["fields"]
@@ -59,6 +61,14 @@ class AddCatalogItemModal(discord.ui.Modal):
             else:
                 kwargs[field] = raw_val
 
+        if self.replace:
+            try:
+                self.manager.replace_item(self.category, self.prefill_data.get("url"), kwargs)
+                return
+            except Exception as e:
+                await interaction.followup.send(f"Failed to replace item in catalog: {e}", ephemeral=True)
+                return
+        
         try:
             self.manager.add_to_category(self.category, **kwargs)
         except Exception as e:

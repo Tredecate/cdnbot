@@ -25,6 +25,55 @@ intents = discord.Intents.default()
 bot = CDNBot(intents=intents)
 
 
+@bot.tree.command(name="modifycatalog", description="Modify an item in a configured CDN catalog")
+@app_commands.describe(catalog="The target catalog", category="The category within the catalog")
+@app_commands.describe(item="The path, URL, or alt text of the item to modify")
+@app_commands.autocomplete(catalog=catalog_autocomplete, category=category_autocomplete)
+@app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+@app_commands.allowed_installs(guilds=True, users=True)
+async def modifycatalog(interaction: discord.Interaction, catalog: str, category: str, item: str):
+    manager = catalog_managers.get(catalog)
+
+    if not manager or not manager.is_initialized():
+        failure_mode = manager.failuremode if manager else "Manager not found"
+        debug_log(f"Failed to modify item in catalog {catalog}: {failure_mode}", 1)
+        await interaction.response.send_message(f"Catalog {catalog} is not initialized. Cannot modify item. {failure_mode}", ephemeral=True)
+        return
+
+    try:
+        category_items = manager.get_category_items(category)
+    except Exception as e:
+        await interaction.response.send_message(f"Failed to get category items for {category}: {e}", ephemeral=True)
+        return
+
+    item = item.strip()
+    item_name = item
+    
+    is_url = item.startswith("http://") or item.startswith("https://")
+    is_path = not is_url and "/" in item
+    is_alt_text = not is_url and not is_path
+    if is_url:
+        item = next((i for i in category_items if i.get("url") == item), None)
+
+    if is_path:
+        item = f"{settings.bucket_public_url}/{item.lstrip('/')}"
+        item = next((i for i in category_items if i.get("url") == item), None)
+
+    if is_alt_text:
+        item = next((i for i in category_items if i.get("name") == item), None)
+
+    debug_log(f"Searching for item '{item_name}' in category '{category}' of catalog '{catalog}'", 2)
+    debug_log(f"is_url: {is_url}, is_path: {is_path}, is_alt_text: {is_alt_text}", 2)
+    debug_log(f"Resolved item: {item}", 2)
+    
+    if not item:
+        await interaction.response.send_message(f"Item with name '{item_name}' not found in category '{category}'.", ephemeral=True)
+        return
+
+    config_modal = AddCatalogItemModal(manager, category, manager.get_category_schema(category), ephemeral=True, prefill_data=item, spawn_interaction=interaction, replace=True)
+    await interaction.response.send_modal(config_modal)
+
+
 @bot.tree.command(name="addtocatalog", description="Add an item to a configured CDN catalog")
 @app_commands.describe(catalog="The target catalog", category="The category within the catalog")
 @app_commands.autocomplete(catalog=catalog_autocomplete, category=category_autocomplete)
