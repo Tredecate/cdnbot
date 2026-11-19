@@ -63,6 +63,91 @@ class CatalogManager:
         }
 
 
+    def get_category_items(self, category: str, refresh: bool = False) -> list[dict[str, Any]]:
+        if refresh:
+            self._get_state()
+        
+        section = self._local_state.get(self.catalog_type, {})
+        cat_data = section.get(category)
+
+        if not cat_data or cat_data.get("type") != "cdn_category":
+            raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+
+        return cat_data.get("items", [])
+
+
+    def change_item_field(self, category: str, item_url: str, field_name: str, new_value: str):
+        self._get_state()
+        section = self._local_state.get(self.catalog_type, {})
+        cat_data = section.get(category)
+
+        if not cat_data or cat_data.get("type") != "cdn_category":
+            raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+
+        items = cat_data.get("items", [])
+        item_to_update = next((item for item in items if item.get("url") == item_url), None)
+
+        if not item_to_update:
+            raise ValueError(f"Item with URL {item_url} not found in category {category}.")
+
+        if field_name not in cat_data.get("fields", []):
+            raise ValueError(f"Field {field_name} is not valid for category {category}.")
+
+        item_to_update[field_name] = new_value
+        self._update_state()
+        self._update_catalog_html()
+
+
+    def replace_item(self, category: str, old_item_url: str, new_item_data: dict[str, Any]):
+        self._get_state()
+        section = self._local_state.get(self.catalog_type, {})
+        cat_data = section.get(category)
+
+        if not cat_data or cat_data.get("type") != "cdn_category":
+            raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+
+        items = cat_data.get("items", [])
+        item_index = next((i for i, item in enumerate(items) if item.get("url") == old_item_url), None)
+
+        if item_index is None:
+            raise ValueError(f"Item with URL {old_item_url} not found in category {category}.")
+
+        allowed_fields = cat_data.get("fields", [])
+        defaults = cat_data.get("defaults", {})
+
+        validated_item_data = {}
+        for field in allowed_fields:
+            if field in new_item_data and new_item_data[field] is not None and new_item_data[field] != "":
+                validated_item_data[field] = new_item_data[field]
+            elif field in defaults:
+                validated_item_data[field] = defaults[field]
+            else:
+                raise ValueError(f"Missing required field {field} for category {category}.")
+
+        items[item_index] = validated_item_data
+        self._update_state()
+        self._update_catalog_html()
+
+
+    def remove_from_category(self, category: str, item_url: str):
+        self._get_state()
+        section = self._local_state.get(self.catalog_type, {})
+        cat_data = section.get(category)
+
+        if not cat_data or cat_data.get("type") != "cdn_category":
+            raise ValueError(f"Unknown category {category} in catalog {self.catalog_type}")
+
+        items = cat_data.get("items", [])
+        item_to_remove = next((item for item in items if item.get("url") == item_url), None)
+
+        if not item_to_remove:
+            raise ValueError(f"Item with URL {item_url} not found in category {category}.")
+
+        items.remove(item_to_remove)
+        self._update_state()
+        self._update_catalog_html()
+
+
     def add_batch_to_category(self, batch: dict[str, list[dict[str, Any]]]):
         self._get_state()
         processed_categories = {}
